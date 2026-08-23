@@ -28,10 +28,10 @@ end
 local function getExploitGlobal(name)
     local val = nil
     if getgenv then
-        pcall(function() val = rawget(getgenv(), name) end)
+        pcall(function() val = getgenv()[name] end)
     end
     if val ~= nil then return val end
-    pcall(function() val = rawget(fenv, name) end)
+    pcall(function() val = fenv[name] end)
     return val
 end
 
@@ -43,13 +43,13 @@ local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or 
 if not queue_on_teleport then
     local synTable = get("nys")
     if type(synTable) == "table" then
-        queue_on_teleport = rawget(synTable, decStr("tropelet_no_eueuq"))
+        queue_on_teleport = synTable[decStr("tropelet_no_eueuq")]
     end
 end
 if not queue_on_teleport then
     local fluxTable = get("suxulf")
     if type(fluxTable) == "table" then
-        queue_on_teleport = rawget(fluxTable, decStr("tropelet_no_eueuq"))
+        queue_on_teleport = fluxTable[decStr("tropelet_no_eueuq")]
     end
 end
 
@@ -299,10 +299,10 @@ end
 local function getExploitGlobal(name)
     local val = nil
     if getgenv then
-        pcall(function() val = rawget(getgenv(), name) end)
+        pcall(function() val = getgenv()[name] end)
     end
     if val ~= nil then return val end
-    pcall(function() val = rawget(fenv, name) end)
+    pcall(function() val = fenv[name] end)
     return val
 end
 
@@ -314,13 +314,13 @@ local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or 
 if not queue_on_teleport then
     local synTable = get("nys")
     if type(synTable) == "table" then
-        queue_on_teleport = rawget(synTable, decStr("tropelet_no_eueuq"))
+        queue_on_teleport = synTable[decStr("tropelet_no_eueuq")]
     end
 end
 if not queue_on_teleport then
     local fluxTable = get("suxulf")
     if type(fluxTable) == "table" then
-        queue_on_teleport = rawget(fluxTable, decStr("tropelet_no_eueuq"))
+        queue_on_teleport = fluxTable[decStr("tropelet_no_eueuq")]
     end
 end
 
