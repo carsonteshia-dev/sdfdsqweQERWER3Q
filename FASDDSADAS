@@ -15,7 +15,7 @@ if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
 local fenv = getfenv(0) or getfenv()
-local getgenv = fenv[string.reverse("vnegteg")]
+local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
 if type(getgenv) ~= "function" then getgenv = nil end
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
@@ -32,6 +32,10 @@ local function getExploitGlobal(name)
     end
     if val ~= nil then return val end
     pcall(function() val = fenv[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = _G[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = shared[name] end)
     return val
 end
 
@@ -286,7 +290,7 @@ if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
 local fenv = getfenv(0) or getfenv()
-local getgenv = fenv[string.reverse("vnegteg")]
+local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
 if type(getgenv) ~= "function" then getgenv = nil end
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
@@ -303,6 +307,10 @@ local function getExploitGlobal(name)
     end
     if val ~= nil then return val end
     pcall(function() val = fenv[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = _G[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = shared[name] end)
     return val
 end
 
@@ -702,6 +710,9 @@ local cleanupFunc = function()
 end
 
 _G.ShystxLazyEngineCleanup = cleanupFunc
+if getgenv then
+    getgenv().ShystxLazyEngineCleanup = cleanupFunc
+end
 ]==]
 
 local function StartEngineWithAutoExec()
@@ -1254,6 +1265,22 @@ local function RefreshLists()
 end
 
 RefreshLists()
+pcall(function()
+    local cnt = ""
+    if isfile and isfile(F_PATH) then
+        cnt = readfile(F_PATH)
+    end
+    if cnt and cnt ~= "" then
+        local dec = AutoRepairJSON(cnt)
+        if type(dec) == "table" then
+            local total = 0
+            for _ in pairs(dec) do total = total + 1 end
+            if total >= 3 then
+                StartEngineWithAutoExec()
+            end
+        end
+    end
+end)
 FLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     FlagScroll.CanvasSize = UDim2.new(0, 0, 0, FLayout.AbsoluteContentSize.Y + 10)
 end)
