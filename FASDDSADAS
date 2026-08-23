@@ -1,500 +1,167 @@
--- ====================================================================
--- SHYSTXLAZY FFM - FASTFLAG LUA JSON MANAGER
--- Dynamic Live FastFlag State Engine (Active Overview + Named Config Presets)
--- Self-Contained Quine Auto-Execution with Live Dynamic Rejoin Auto-Unregister
--- Indestructible Rejoin Anti-Stack Clean Mutex (Never stacks boost when flags removed)
--- Controller & Keyboard Parity Normalization (Absolute Equal Jump Boost & Curve)
--- Tuned Subtle Shift/Unshift Boost Curve (Tuned Down Further for Smooth Precision)
--- Surgical Metamethod Masking (ONLY DPadUp & LeftControl Masked; All Other DPad Keys Pass Unhindered)
--- Flag Editor Modal with Set & Delete (Del) Buttons per Flag Row
--- Universal Malformed JSON Auto-Repair Parser (Zero-Error Fault Tolerance)
--- ====================================================================
-
--- Global Anti-Stack Cleanup & Mutex Guard
-if _G.ShystxLazyEngineCleanup then
-    pcall(_G.ShystxLazyEngineCleanup)
-end
-local fenv = getfenv(0) or getfenv()
-local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
-if type(getgenv) ~= "function" then getgenv = nil end
-if getgenv and getgenv().ShystxLazyEngineCleanup then
-    pcall(getgenv().ShystxLazyEngineCleanup)
-end
-
-local function decStr(str)
-    return string.reverse(str)
-end
-
-local function getExploitGlobal(name)
-    local val = nil
-    if getgenv then
-        pcall(function() val = getgenv()[name] end)
-    end
-    if val ~= nil then return val end
-    pcall(function() val = fenv[name] end)
-    if val ~= nil then return val end
-    pcall(function() val = _G[name] end)
-    if val ~= nil then return val end
-    pcall(function() val = shared[name] end)
-    return val
-end
-
-local function get(revName)
-    return getExploitGlobal(decStr(revName))
-end
-
-local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or get("tropelet_rof_eueuq")
-if not queue_on_teleport then
-    local synTable = get("nys")
-    if type(synTable) == "table" then
-        queue_on_teleport = synTable[decStr("tropelet_no_eueuq")]
-    end
-end
-if not queue_on_teleport then
-    local fluxTable = get("suxulf")
-    if type(fluxTable) == "table" then
-        queue_on_teleport = fluxTable[decStr("tropelet_no_eueuq")]
-    end
-end
-
-local gethui = get("iuhteg")
-local cloneref = get("ferenolc") or function(x) return x end
-local hookmetamethod = get("dodematemkooh")
-local newcclosure = get("erusolcwen")
-local syn_newcclosure = get("erusolcwen_nys")
-local checkcaller = get("rellackehc") or function() return false end
-local getconnections = get("snoitcennocteg")
-local getnamecallmethod = get("dohtemllacemanteg") or getnamecallmethod
-local setfpscap = get("pacspftes")
-local setfflag = get("galfftes") or get("galff_tes")
-local getfflag = get("galffteg") or get("galfteg")
-local isfile = get("eliftsi")
-local isfolder = get("redloftsi")
-local makefolder = get("redlofekam")
-local writefile = get("elifetirw")
-local readfile = get("elifdaer")
-
-local function obfuscate(code)
-    local hex = {}
-    for i = 1, #code do
-        hex[i] = string.format("%02x", string.byte(code, i))
-    end
-    return "local h='" .. table.concat(hex) .. "';local s={};for i=1,#h,2 do s[#s+1]=string.char(tonumber(h:sub(i,i+1),16)) end;loadstring(table.concat(s))()"
-end
-
--- Teleport Quine Re-Execution Handler (Saves script code into memory queue)
-if queue_on_teleport then
-    pcall(function()
-        local scriptSource = debug.getinfo(1, "S").source
-        local cleanSource = scriptSource:match("@?(.*)")
-        if cleanSource and isfile and isfile(cleanSource) then
-            local fileContent = readfile(cleanSource)
-            queue_on_teleport(obfuscate(fileContent))
-        end
-    end)
-end
-
--- Wait for game to initialize safely
-if not game:IsLoaded() then 
-    game.Loaded:Wait() 
-end
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local cloneref = cloneref or function(x) return x end
-local HttpService = cloneref(game:GetService("HttpService"))
-local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
-
--- Safe CoreGui Retrieval
-local CoreGui = nil
-pcall(function()
-    CoreGui = game:GetService("CoreGui")
-end)
-
--- Dynamic Parent Picker (gethui -> CoreGui test -> PlayerGui fallback)
-local parentGui = nil
-if gethui then
-    pcall(function()
-        parentGui = gethui()
-    end)
-end
-
-if not parentGui and CoreGui then
-    pcall(function()
-        local test = Instance.new("Folder")
-        test.Parent = CoreGui
-        test:Destroy()
-        parentGui = CoreGui
-    end)
-end
-
-if not parentGui then
-    pcall(function()
-        parentGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
-    end)
-end
-
--- UIStroke Fault-Tolerant Creation Helper
-local function AddStroke(parent, properties)
-    local stroke = nil
-    pcall(function()
-        stroke = Instance.new("UIStroke")
-        for prop, val in pairs(properties) do
-            stroke[prop] = val
-        end
-        stroke.Parent = parent
-    end)
-    return stroke
-end
-
-local F_PATH = "ZoneStraps/FFlags.json"
-local CONFIGS_PATH = "ZoneStraps/Configs.json"
-
--- File system directories setup
-if not isfolder or not isfolder("ZoneStraps") then
-    pcall(function() if makefolder then makefolder("ZoneStraps") end end)
-end
-if isfile and not isfile(F_PATH) then
-    pcall(function() if writefile then writefile(F_PATH, "{}") end end)
-end
-if isfile and not isfile(CONFIGS_PATH) then
-    pcall(function() if writefile then writefile(CONFIGS_PATH, "{}") end end)
-end
-
--- ====================================================================
--- INTEGRATED ANTI-CHEAT BYPASS PIPELINE
--- ====================================================================
--- pcall(function()
---     loadstring(game:HttpGet("https://raw.githubusercontent.com/shakar60/scripts/refs/heads/main/ac%20bypass", true))()
--- end)
-
--- pcall(function()
---     loadstring(game:HttpGet("https://raw.githubusercontent.com/Pixeluted/adoniscries/main/Source.lua", true))()
--- end)
-
--- pcall(function()
---     loadstring(game:HttpGet("https://raw.githubusercontent.com/RelkzzRebranded/Bypassed---OBFUSCATED..../main/Adonis%20BYPASS.lua"))()
--- end)
-
--- Metamethod Kick Bypass & GUI Hiding
-local cclosure = syn_newcclosure or newcclosure or nil
-local checkcaller = checkcaller or function() return false end
-local oldNamecall
-local oldIndex
-local targetGuiName = "shystxlazy_ffm"
-
-if cclosure and hookmetamethod then
-    -- Retrieve Workspace service reference statically for safe pointer comparison
-    local Workspace = nil
-    pcall(function()
-        Workspace = game:GetService("Workspace")
-    end)
-
-    -- Kick & Detection Remotes Bypass
-    pcall(function()
-        oldNamecall = hookmetamethod(game, "__namecall", cclosure(function(self, ...)
-            local NamecallMethod = getnamecallmethod()
-            local args = { ... }
-            local caller = false
-            pcall(function() caller = checkcaller() end)
-            
-            if not caller then
-                -- Kick protection
-                if (NamecallMethod == "Kick" or NamecallMethod == "kick") then
-                    if self == LocalPlayer then
-                        return
-                    end
-                end
-                
-                -- GUI Hiding from scanners with non-indexing pointer checks (Prevents crash recursion)
-                local isCoreGui = (CoreGui and self == CoreGui)
-                local isWorkspace = (Workspace and self == Workspace)
-                
-                if isCoreGui or self == game or isWorkspace then
-                    if NamecallMethod == "FindFirstChild" and args[1] == targetGuiName then
-                        return nil
-                    elseif NamecallMethod == "GetChildren" or NamecallMethod == "GetDescendants" then
-                        local results = oldNamecall(self, ...)
-                        local filtered = {}
-                        for _, child in ipairs(results) do
-                            if child.Name ~= targetGuiName then
-                                table.insert(filtered, child)
-                            end
-                        end
-                        return filtered
-                    end
-                end
-                
-                -- Remote fire blocking
-                local DETECTION_REMOTES = {
-                    "CHECKER_1", "CHECKER", "OneMoreTime", "checkingSPEED",
-                    "PERMAIDBAN", "BANREMOTE", "FORCEFIELD", "TeleportDetect"
-                }
-                if NamecallMethod == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) then
-                    return
-                end
-            end
-            
-            return oldNamecall(self, ...)
-        end))
-    end)
-
-    -- Property Spoofer (e.g. Gravity check bypass)
-    pcall(function()
-        oldIndex = hookmetamethod(game, "__index", cclosure(function(self, key)
-            local caller = false
-            pcall(function() caller = checkcaller() end)
-            
-            if not caller then
-                local isCoreGui = (CoreGui and self == CoreGui)
-                local isWorkspace = (Workspace and self == Workspace)
-
-                if (isCoreGui or self == game) and key == targetGuiName then
-                    return nil
-                end
-                if key == "Gravity" and isWorkspace then
-                    return 196.2
-                end
-            end
-            return oldIndex(self, key)
-        end))
-    end)
-end
-
--- Camera Anti-Cheat listener detachments
-pcall(function()
-    if getconnections then
-        local ws = game:GetService("Workspace")
-        local camera = ws and ws.CurrentCamera
-        if camera then
-            local con1 = getconnections(camera.Changed)
-            for i = 1, #con1 do
-                con1[i]:Disable()
-            end
-            local con2 = getconnections(camera:GetPropertyChangedSignal("CFrame"))
-            for i = 1, #con2 do
-                con2[i]:Disable()
-            end
-        end
-    end
-end)
-
--- ====================================================================
--- SELF-CONTAINED PERSISTENT BACKGROUND ENGINE (Auto-Executes On Rejoins/Teleports)
--- ====================================================================
-local engineBody = [==[
--- Hard Reset Previous Connections & States Across Rejoin/Teleport/Re-execution
-if _G.ShystxLazyEngineCleanup then
-    pcall(_G.ShystxLazyEngineCleanup)
-end
-local fenv = getfenv(0) or getfenv()
-local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
-if type(getgenv) ~= "function" then getgenv = nil end
-if getgenv and getgenv().ShystxLazyEngineCleanup then
-    pcall(getgenv().ShystxLazyEngineCleanup)
-end
-
-local function decStr(str)
-    return string.reverse(str)
-end
-
-local function getExploitGlobal(name)
-    local val = nil
-    if getgenv then
-        pcall(function() val = getgenv()[name] end)
-    end
-    if val ~= nil then return val end
-    pcall(function() val = fenv[name] end)
-    if val ~= nil then return val end
-    pcall(function() val = _G[name] end)
-    if val ~= nil then return val end
-    pcall(function() val = shared[name] end)
-    return val
-end
-
-local function get(revName)
-    return getExploitGlobal(decStr(revName))
-end
-
-local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or get("tropelet_rof_eueuq")
-if not queue_on_teleport then
-    local synTable = get("nys")
-    if type(synTable) == "table" then
-        queue_on_teleport = synTable[decStr("tropelet_no_eueuq")]
-    end
-end
-if not queue_on_teleport then
-    local fluxTable = get("suxulf")
-    if type(fluxTable) == "table" then
-        queue_on_teleport = fluxTable[decStr("tropelet_no_eueuq")]
-    end
-end
-
-local hookmetamethod = get("dodematemkooh")
-local checkcaller = get("rellackehc") or function() return false end
-local getconnections = get("snoitcennocteg")
-local getnamecallmethod = get("dohtemllacemanteg") or getnamecallmethod
-local isfile = get("eliftsi")
-local readfile = get("elifdaer")
-
+-- Indestructible Pure Local Quine Engine (Zero getgenv() / Zero Disk Files)
+local template = [==[
+local s = %q
 if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Players = game:GetService("Players")
 repeat task.wait(0.1) until Players.LocalPlayer
 local LocalPlayer = Players.LocalPlayer
 
+-- Re-Queue Self via Local Stack Formatting (Immune to getgenv() flushes)
+local q = queue_on_teleport 
+       or (syn and syn.queue_on_teleport) 
+       or (fluxus and fluxus.queue_on_teleport) 
+       or queueonteleport 
+       or queue_for_teleport
 
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local activeToggle = true
-local engineConnections = {}
+if q then
+    pcall(function()
+        q(string.format(s, s))
+    end)
+end
+
+-- =======================================================
+-- YOUR CUSTOM CODE RUNS HERE ON EVERY REJOIN:
+-- =======================================================
+_G.ShystxEngineActive = true
+
+local fenv = (type(getfenv) == "function" and getfenv(0)) or {}
+local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
+if type(getgenv) ~= "function" then getgenv = nil end
+
+local function getExploitGlobal(name)
+    local val = nil
+    if getgenv and type(getgenv) == "function" then pcall(function() val = getgenv()[name] end) end
+    if val ~= nil then return val end
+    if fenv and type(fenv) == "table" then pcall(function() val = fenv[name] end) end
+    if val ~= nil then return val end
+    pcall(function() val = _G[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = shared[name] end)
+    return val
+end
+
+local hookmetamethod = getExploitGlobal(string.reverse("dodematemkooh"))
+local newcclosure = getExploitGlobal(string.reverse("erusolcwen")) or function(f) return f end
+local checkcaller = getExploitGlobal(string.reverse("rellackehc")) or function() return false end
+local getconnections = getExploitGlobal(string.reverse("snoitcennocteg"))
+local getnamecallmethod = getExploitGlobal(string.reverse("dohtemllacemanteg"))
+local setfflag = getExploitGlobal(string.reverse("galfftes")) or getExploitGlobal(string.reverse("galff_tes")) or getExploitGlobal(string.reverse("galftes")) or getExploitGlobal(string.reverse("galf_tes"))
+
+local isfile = getExploitGlobal(string.reverse("eliftsi")) or (getgenv and type(getgenv) == "function" and getgenv().isfile) or isfile
+local readfile = getExploitGlobal(string.reverse("elifdaer")) or (getgenv and type(getgenv) == "function" and getgenv().readfile) or readfile
+
 local F_PATH = "ZoneStraps/FFlags.json"
+local flagsCache = {}
 
--- STRICT ISOLATED KEY MASK (ONLY DPadUp and LeftControl masked; DPadDown, DPadLeft, DPadRight, etc. completely visible)
+local function TrySetFlag(flagName, val)
+    if type(setfflag) ~= "function" then return false end
+    local cleanName = flagName:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
+    local ok1 = pcall(function() setfflag(flagName, val) end)
+    if ok1 then return true end
+    local ok2 = pcall(function() setfflag(flagName, tostring(val)) end)
+    if ok2 then return true end
+    local ok3 = pcall(function() setfflag(cleanName, val) end)
+    if ok3 then return true end
+    local ok4 = pcall(function() setfflag(cleanName, tostring(val)) end)
+    if ok4 then return true end
+    return false
+end
+
+if type(isfile) == "function" and type(readfile) == "function" then
+    local ok, cnt = pcall(function() return readfile(F_PATH) end)
+    if ok and cnt and cnt ~= "" then
+        local HttpService = game:GetService("HttpService")
+        local parsedOk, decoded = pcall(function() return HttpService:JSONDecode(cnt) end)
+        if parsedOk and type(decoded) == "table" then
+            for k, v in pairs(decoded) do
+                flagsCache[k] = tostring(v)
+                local clean = k:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
+                flagsCache[clean] = tostring(v)
+                TrySetFlag(k, v)
+            end
+        end
+    end
+end
+
+local oldNamecall, oldIndex
 local MASK_KEYS = {
     [Enum.KeyCode.DPadUp] = true,
     [Enum.KeyCode.LeftControl] = true
 }
 
--- Clean Flag Helper
-local function CleanFlagName(flag)
-    local clean = string.gsub(flag, "DFInt", "")
-    clean = string.gsub(clean, "DFFlag", "")
-    clean = string.gsub(clean, "FFlag", "")
-    clean = string.gsub(clean, "FInt", "")
-    clean = string.gsub(clean, "DFString", "")
-    clean = string.gsub(clean, "FString", "")
-    return clean
-end
-
--- Lightweight In-Engine JSON Parser
-local function FastReadFlags()
-    local cnt = ""
-    pcall(function() if isfile and isfile(F_PATH) then cnt = readfile(F_PATH) end end)
-    if not cnt or cnt:match("^%s*$") then return {}, 0 end
-
-    local cleanMap = {}
-    local total = 0
-    for key, val in cnt:gmatch('["\']?([%w_]+)["\']?%s*[:=]%s*(["\']?[%w_.%-]+["\']?)') do
-        local cleanKey = CleanFlagName(key:gsub('["\']', ''):gsub('^%s*(.-)%s*$', '%1'))
-        local cleanVal = val:gsub('^%s*(.-)%s*$', '%1')
-        if cleanVal:sub(1,1) == '"' or cleanVal:sub(1,1) == "'" then cleanVal = cleanVal:sub(2, -2) end
-        cleanMap[cleanKey] = cleanVal
-        total = total + 1
-    end
-    return cleanMap, total
-end
-
--- Check current active flags immediately on startup/rejoin
-local initialFlags, initialTotal = FastReadFlags()
-local initialFluidMatches = 0
-if initialFlags["SimDefaultFluidForceEnabled"] then initialFluidMatches = initialFluidMatches + 1 end
-if initialFlags["SimDefaultFluidHeightBooster"] then initialFluidMatches = initialFluidMatches + 1 end
-if initialFlags["CharacterJumpBoost"] then initialFluidMatches = initialFluidMatches + 1 end
-if initialFlags["SimDefaultFluidForceJumpHeightMultiplier"] then initialFluidMatches = initialFluidMatches + 1 end
-
-local initialAdaptiveMatches = 0
-if initialFlags["SimAdaptiveTimesteppingDefault2"] then initialAdaptiveMatches = initialAdaptiveMatches + 1 end
-if initialFlags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then initialAdaptiveMatches = initialAdaptiveMatches + 1 end
-if initialFlags["SimHumanoidTimestepModelUpdate"] then initialAdaptiveMatches = initialAdaptiveMatches + 1 end
-
--- If flags were removed from the file, do not re-arm persistence or engine
-if initialTotal >= 3 and (initialFluidMatches >= 2 or initialAdaptiveMatches >= 2) then
-    if queue_on_teleport then
-        pcall(function()
-            local fullCode = "local __SRC = " .. string.format("%q", __SRC) .. "\n" .. __SRC
-            local hex = {}
-            for i = 1, #fullCode do
-                hex[i] = string.format("%02x", string.byte(fullCode, i))
-            end
-            local obfCode = "local h='" .. table.concat(hex) .. "';local s={};for i=1,#h,2 do s[#s+1]=string.char(tonumber(h:sub(i,i+1),16)) end;loadstring(table.concat(s))()"
-            queue_on_teleport(obfCode)
-        end)
-    end
-end
-
--- Full Stealth Metamethod Masking (ONLY DPadUp & LeftControl)
-local oldIndex
-if hookmetamethod then
+if type(hookmetamethod) == "function" then
     pcall(function()
-        oldIndex = hookmetamethod(game, "__index", function(self, key)
-            if not checkcaller or not checkcaller() then
-                if typeof(self) == "Instance" and self:IsA("InputObject") then
-                    if key == "KeyCode" then
-                        local realKey = oldIndex(self, key)
-                        if MASK_KEYS[realKey] then
-                            return Enum.KeyCode.Unknown
-                        end
-                    end
+        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+            local method = type(getnamecallmethod) == "function" and getnamecallmethod() or ""
+            local caller = (type(checkcaller) == "function" and checkcaller()) or false
+            if not caller then
+                if method == "Kick" or method == "kick" then
+                    if self == LocalPlayer then return end
                 end
-            end
-            return oldIndex(self, key)
-        end)
-    end)
-end
-
-local oldNamecall
-if hookmetamethod then
-    pcall(function()
-        oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-            local method = getnamecallmethod()
-            local args = {...}
-
-            if not checkcaller or not checkcaller() then
+                local DETECTION_REMOTES = {
+                    "CHECKER_1", "CHECKER", "OneMoreTime", "checkingSPEED",
+                    "PERMAIDBAN", "BANREMOTE", "FORCEFIELD", "TeleportDetect"
+                }
+                if method == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) then return end
                 if self == UserInputService then
+                    local args = {...}
                     if (method == "IsKeyDown" or method == "IsGamepadButtonDown") and MASK_KEYS[args[1]] then
                         return false
                     elseif method == "GetKeysPressed" or method == "GetGamepadState" then
                         local keys = oldNamecall(self, ...)
                         local filtered = {}
-                        for _, inputObj in ipairs(keys) do
-                            local realKey = oldIndex and oldIndex(inputObj, "KeyCode") or inputObj.KeyCode
-                            if not MASK_KEYS[realKey] then
-                                table.insert(filtered, inputObj)
+                        if type(keys) == "table" then
+                            for _, inputObj in ipairs(keys) do
+                                if not MASK_KEYS[inputObj.KeyCode] then
+                                    table.insert(filtered, inputObj)
+                                end
                             end
                         end
                         return filtered
                     end
                 end
             end
-
             return oldNamecall(self, ...)
-        end)
+        end))
+    end)
+
+    pcall(function()
+        oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
+            local caller = (type(checkcaller) == "function" and checkcaller()) or false
+            if not caller then
+                if key == "Gravity" and self == workspace then return 196.2 end
+                if typeof(self) == "Instance" and self:IsA("InputObject") and key == "KeyCode" then
+                    local realKey = oldIndex(self, key)
+                    if MASK_KEYS[realKey] then return Enum.KeyCode.Unknown end
+                end
+            end
+            return oldIndex(self, key)
+        end))
     end)
 end
 
-if getconnections then
-    local function patchSignals(signal)
-        pcall(function()
-            for _, conn in pairs(getconnections(signal)) do
-                local fn = conn.Function
-                if fn then
-                    conn:Disable()
-                    signal:Connect(function(input, gp)
-                        local realKey = oldIndex and oldIndex(input, "KeyCode") or input.KeyCode
-                        if MASK_KEYS[realKey] then
-                            return
-                        end
-                        fn(input, gp)
-                    end)
-                end
+pcall(function()
+    if type(getconnections) == "function" then
+        local camera = workspace.CurrentCamera
+        if camera then
+            for _, conn in pairs(getconnections(camera.Changed)) do
+                if conn and type(conn.Disable) == "function" then conn:Disable() end
             end
-        end)
+            for _, conn in pairs(getconnections(camera:GetPropertyChangedSignal("CFrame"))) do
+                if conn and type(conn.Disable) == "function" then conn:Disable() end
+            end
+        end
     end
+end)
 
-    patchSignals(UserInputService.InputBegan)
-    patchSignals(UserInputService.InputChanged)
-    patchSignals(UserInputService.InputEnded)
-end
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- ====================================================================
--- LIVE DYNAMIC FASTFLAG LINKED ENGINE (With Gamepad & Keyboard Parity)
--- ====================================================================
 local currentHumanoid = nil
 local currentRootPart = nil
 local characterConnections = {}
+local activeToggle = true
 
 local FF3_BOOST = 0.65
 local FF3_TICKS = 6
@@ -502,13 +169,24 @@ local ff3Boosting = false
 local ff3TickCount = 0
 local isAirborneBoosting = false
 
--- Base curve vs Enhanced curve (+0.2) when Adaptive flags are present (Tuned Down further for fine control)
 local baseCurve = {1.5, 1.3, 1.0, 0.7, 0.4}
 local enhancedCurve = {1.7, 1.5, 1.2, 0.9, 0.6}
 
+local function SetLinearVel(part, x, y, z)
+    pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
+    pcall(function() part.Velocity = Vector3.new(x, y, z) end)
+end
+
+local function GetLinearVel(part)
+    local v = nil
+    pcall(function() v = part.AssemblyLinearVelocity end)
+    if not v then pcall(function() v = part.Velocity end) end
+    return v or Vector3.zero
+end
+
 local function cleanupCharacter()
     for _, connection in ipairs(characterConnections) do
-        if connection then connection:Disconnect() end
+        if connection and type(connection.Disconnect) == "function" then connection:Disconnect() end
     end
     characterConnections = {}
     currentHumanoid = nil
@@ -516,6 +194,44 @@ local function cleanupCharacter()
     ff3Boosting = false
     ff3TickCount = 0
     isAirborneBoosting = false
+end
+
+local function TriggerJumpBoost()
+    if not activeToggle or not currentRootPart or isAirborneBoosting then return end
+
+    local fluidMatches = 0
+    if flagsCache["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
+    if flagsCache["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
+    if flagsCache["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
+    if flagsCache["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
+    local hasFluidFlags = (fluidMatches >= 1)
+
+    local adaptiveMatches = 0
+    if flagsCache["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
+    if flagsCache["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
+    if flagsCache["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
+    local hasAdaptiveFlags = (adaptiveMatches >= 1)
+
+    if not hasFluidFlags and not hasAdaptiveFlags then return end
+
+    isAirborneBoosting = true
+    if hasFluidFlags then
+        ff3Boosting = true
+        ff3TickCount = 0
+    end
+
+    task.spawn(function()
+        task.wait(0.02)
+        local curveToUse = hasAdaptiveFlags and enhancedCurve or baseCurve
+        for i = 1, #curveToUse do
+            if not currentRootPart or not currentRootPart.Parent then break end
+            local curVel = GetLinearVel(currentRootPart)
+            SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
+            RunService.Heartbeat:Wait()
+        end
+        task.wait(0.15)
+        isAirborneBoosting = false
+    end)
 end
 
 local function setupCharacter(char)
@@ -529,165 +245,482 @@ local function setupCharacter(char)
     currentHumanoid = humanoid
     currentRootPart = root
 
-    local BASE_JUMP = 50
-    humanoid.UseJumpPower = true
-    humanoid.JumpPower = BASE_JUMP
-    humanoid.AutoRotate = true
-    humanoid.PlatformStand = false
+    pcall(function()
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = 50
+        humanoid.AutoRotate = true
+        humanoid.PlatformStand = false
+    end)
 
     if humanoid:GetState() == Enum.HumanoidStateType.Physics then
         humanoid:ChangeState(Enum.HumanoidStateType.Running)
     end
 
-    local actionReady = true
-    local wasLocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
-
-    table.insert(characterConnections, RunService.RenderStepped:Connect(function()
-        local isLocked = UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter
-        if wasLocked and not isLocked then
-            actionReady = true
-        end
-        wasLocked = isLocked
-    end))
-
-    -- Dynamic Live Heartbeat Tick: Ground Micro-Bounce & FF3 Fluid Layer
     local bouncePhase = 0
+
     table.insert(characterConnections, RunService.Heartbeat:Connect(function()
         if not root or not root.Parent or not activeToggle then return end
 
-        local flags, totalCount = FastReadFlags()
-        if totalCount < 3 then return end
-
-        -- Live check: Fluid Force required flags
-        local fluidMatches = 0
-        if flags["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
-        if flags["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
-        if flags["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
-        if flags["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
-        local hasFluidFlags = (fluidMatches >= 2)
-
-        -- Live check: Adaptive Timestepping flags
         local adaptiveMatches = 0
-        if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-        local hasAdaptiveFlags = (adaptiveMatches >= 2)
+        if flagsCache["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
+        if flagsCache["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
+        if flagsCache["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
+        local hasAdaptiveFlags = (adaptiveMatches >= 1)
 
-        -- 1. Grounded Micro Bounce (Instantly disables when adaptive flags are missing)
+        -- Ground Micro-Bounce
         if hasAdaptiveFlags and not isAirborneBoosting then
+            local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
             local state = humanoid:GetState()
-            if state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics or state == Enum.HumanoidStateType.Landed then
-                bouncePhase = math.fmod(bouncePhase + 1, 2)
-                local vel = root.AssemblyLinearVelocity
+            if isGrounded or state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics or state == Enum.HumanoidStateType.Landed then
+                bouncePhase = bouncePhase + 1
+                if bouncePhase >= 2 then bouncePhase = 0 end
+                local vel = GetLinearVel(root)
                 if bouncePhase == 0 then
-                    root.AssemblyLinearVelocity = Vector3.new(vel.X, -2.5, vel.Z)
+                    SetLinearVel(root, vel.X, -2.5, vel.Z)
                 else
-                    root.AssemblyLinearVelocity = Vector3.new(vel.X, 5.8, vel.Z)
+                    SetLinearVel(root, vel.X, 5.8, vel.Z)
                 end
             end
         end
 
-        -- 2. FF3 Ticked Booster Loop (Only when fluid force flags are enabled)
-        if hasFluidFlags and ff3Boosting then
+        -- FF3 Ticked Booster Loop
+        if ff3Boosting then
             ff3TickCount = ff3TickCount + 1
             local jitter = (math.random() * 0.2) - 0.1
-            local vel = root.AssemblyLinearVelocity
+            local vel = GetLinearVel(root)
             if vel.Y > 0 then
-                root.AssemblyLinearVelocity = Vector3.new(
-                    vel.X,
-                    vel.Y + FF3_BOOST + jitter,
-                    vel.Z
-                )
+                SetLinearVel(root, vel.X, vel.Y + FF3_BOOST + jitter, vel.Z)
             end
 
             if ff3TickCount >= FF3_TICKS then
                 ff3Boosting = false
                 ff3TickCount = 0
             end
-        else
-            ff3Boosting = false
         end
     end))
 
     table.insert(characterConnections, humanoid.StateChanged:Connect(function(_, newState)
         if newState == Enum.HumanoidStateType.Landed then
-            actionReady = true
             isAirborneBoosting = false
+        elseif newState == Enum.HumanoidStateType.Jumping then
+            TriggerJumpBoost()
         end
+    end))
 
-        if newState == Enum.HumanoidStateType.Jumping and activeToggle then
-            local flags, totalCount = FastReadFlags()
-            if totalCount < 3 then return end
-
-            local fluidMatches = 0
-            if flags["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
-            if flags["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
-            if flags["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
-            if flags["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
-            local hasFluidFlags = (fluidMatches >= 2)
-
-            local adaptiveMatches = 0
-            if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-            if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-            if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-            local hasAdaptiveFlags = (adaptiveMatches >= 2)
-
-            -- Gate: Fluid or Adaptive must be active
-            if not hasFluidFlags and not hasAdaptiveFlags then return end
-
-            -- Parity Baseline: Unify initial jump launch velocity across Gamepad/Controller and Keyboard
-            local baseLaunchVel = root.AssemblyLinearVelocity
-            if baseLaunchVel.Y > 52 then
-                root.AssemblyLinearVelocity = Vector3.new(baseLaunchVel.X, 52, baseLaunchVel.Z)
-            end
-
-            -- 1. FF3 Ticked Boost Layer
-            if hasFluidFlags and not ff3Boosting then
-                ff3Boosting = true
-                ff3TickCount = 0
-            end
-
-            -- 2. Primary Shift/Unshift Smooth Curve Jump
-            if actionReady then
-                local isMovingBackwards = false
-                local camera = game:GetService("Workspace").CurrentCamera
-                if camera then
-                    local camLook = camera.CFrame.LookVector
-                    local flatCamLook = Vector3.new(camLook.X, 0, camLook.Z)
-                    local moveDir = humanoid.MoveDirection
-                    local flatMove = Vector3.new(moveDir.X, 0, moveDir.Z)
-                    
-                    if flatCamLook.Magnitude > 0.05 and flatMove.Magnitude > 0.05 then
-                        local dot = flatMove.Unit:Dot(flatCamLook.Unit)
-                        if dot < -0.5 then
-                            isMovingBackwards = true
-                        end
-                    end
-                end
-
-                if isMovingBackwards then
-                    actionReady = false
-                    isAirborneBoosting = true
-                    task.spawn(function()
-                        task.wait(0.04)
-                        -- Select enhanced curve (+0.2) only if adaptive flags are present; otherwise baseCurve
-                        local curveToUse = hasAdaptiveFlags and enhancedCurve or baseCurve
-                        for i = 1, #curveToUse do
-                            if not root or not root.Parent then break end
-                            local curVel = root.AssemblyLinearVelocity
-                            root.AssemblyLinearVelocity = Vector3.new(curVel.X, curVel.Y + curveToUse[i], curVel.Z)
-                            RunService.Heartbeat:Wait()
-                        end
-                        task.wait(0.2)
-                        isAirborneBoosting = false
-                    end)
-                end
-            end
-        end
+    table.insert(characterConnections, humanoid.Jumping:Connect(function(isJumping)
+        if isJumping then TriggerJumpBoost() end
     end))
 end
 
--- Toggle Handler (Listens directly to raw hardware inputs for stealth toggles)
+UserInputService.JumpRequest:Connect(TriggerJumpBoost)
+UserInputService.InputBegan:Connect(function(input, _)
+    local rawKey = input.KeyCode
+    if rawKey == Enum.KeyCode.LeftControl 
+        or rawKey == Enum.KeyCode.RightControl 
+        or rawKey == Enum.KeyCode.DPadUp then
+        activeToggle = not activeToggle
+    end
+end)
+
+if LocalPlayer.Character then setupCharacter(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(setupCharacter)
+]==]
+
+-- Initial Bootstrapping (Generates self-sustaining local string)
+local fullSource = string.format(template, template)
+
+-- UI MANAGEMENT AND ENGINE INSTANTIATION (Runs locally, never teleports)
+if _G.ShystxLazyEngineCleanup and type(_G.ShystxLazyEngineCleanup) == "function" then
+    pcall(_G.ShystxLazyEngineCleanup)
+end
+
+_G.ShystxEngineActive = false
+_G.ShystxActiveFlagsCache = {}
+
+local fenv = (type(getfenv) == "function" and getfenv(0)) or (type(getfenv) == "function" and getfenv()) or {}
+local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
+if type(getgenv) ~= "function" then getgenv = nil end
+
+local function getExploitGlobal(name)
+    local val = nil
+    if getgenv and type(getgenv) == "function" then pcall(function() val = getgenv()[name] end) end
+    if val ~= nil then return val end
+    if fenv and type(fenv) == "table" then pcall(function() val = fenv[name] end) end
+    if val ~= nil then return val end
+    pcall(function() val = _G[name] end)
+    if val ~= nil then return val end
+    pcall(function() val = shared[name] end)
+    return val
+end
+
+local gethui = getExploitGlobal(string.reverse("iuhteg"))
+local cloneref = getExploitGlobal(string.reverse("ferenolc")) or function(x) return x end
+local hookmetamethod = getExploitGlobal(string.reverse("dodematemkooh"))
+local newcclosure = getExploitGlobal(string.reverse("erusolcwen")) or function(f) return f end
+local checkcaller = getExploitGlobal(string.reverse("rellackehc")) or function() return false end
+local getconnections = getExploitGlobal(string.reverse("snoitcennocteg"))
+local getnamecallmethod = getExploitGlobal(string.reverse("dohtemllacemanteg"))
+local setfpscap = getExploitGlobal(string.reverse("pacspftes"))
+local setfflag = getExploitGlobal(string.reverse("galfftes")) or getExploitGlobal(string.reverse("galff_tes")) or getExploitGlobal(string.reverse("galftes")) or getExploitGlobal(string.reverse("galf_tes"))
+local getfflag = getExploitGlobal(string.reverse("galffteg")) or getExploitGlobal(string.reverse("galfteg"))
+
+local isfile = getExploitGlobal(string.reverse("eliftsi")) or (getgenv and type(getgenv) == "function" and getgenv().isfile) or isfile
+local isfolder = getExploitGlobal(string.reverse("redloftsi")) or (getgenv and type(getgenv) == "function" and getgenv().isfolder) or isfolder
+local makefolder = getExploitGlobal(string.reverse("redlofekam")) or (getgenv and type(getgenv) == "function" and getgenv().makefolder) or makefolder
+local writefile = getExploitGlobal(string.reverse("elifetirw")) or (getgenv and type(getgenv) == "function" and getgenv().writefile) or writefile
+local readfile = getExploitGlobal(string.reverse("elifdaer")) or (getgenv and type(getgenv) == "function" and getgenv().readfile) or readfile
+
+local virtualFiles = {}
+
+local function SafeWriteFile(path, content)
+    virtualFiles[path] = content
+    if type(writefile) == "function" then pcall(function() writefile(path, content) end) end
+end
+
+local function SafeReadFile(path)
+    if type(isfile) == "function" and type(readfile) == "function" then
+        local ok, content = pcall(function() return readfile(path) end)
+        if ok and content and content ~= "" then return content end
+    end
+    return virtualFiles[path] or "{}"
+end
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local HttpService = type(cloneref) == "function" and cloneref(game:GetService("HttpService")) or game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+local CoreGui = nil
+pcall(function() CoreGui = game:GetService("CoreGui") end)
+
+local parentGui = nil
+if type(gethui) == "function" then pcall(function() parentGui = gethui() end) end
+if not parentGui and CoreGui then
+    pcall(function()
+        local test = Instance.new("Folder")
+        test.Parent = CoreGui
+        test:Destroy()
+        parentGui = CoreGui
+    end)
+end
+if not parentGui then
+    pcall(function()
+        parentGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
+    end)
+end
+
+local F_PATH = "ZoneStraps/FFlags.json"
+local CONFIGS_PATH = "ZoneStraps/Configs.json"
+
+if type(isfolder) == "function" and type(makefolder) == "function" then
+    pcall(function() if not isfolder("ZoneStraps") then makefolder("ZoneStraps") end end)
+end
+
+if SafeReadFile(F_PATH) == "{}" then SafeWriteFile(F_PATH, "{}") end
+if SafeReadFile(CONFIGS_PATH) == "{}" then SafeWriteFile(CONFIGS_PATH, "{}") end
+
+-- Anti-Cheat Bypass & Key Masking (Gated Strictly Behind _G.ShystxEngineActive)
+local targetGuiName = "shystxlazy_ffm"
+local MASK_KEYS = {
+    [Enum.KeyCode.DPadUp] = true,
+    [Enum.KeyCode.LeftControl] = true
+}
+
+if type(hookmetamethod) == "function" then
+    pcall(function()
+        local oldNamecall
+        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+            local NamecallMethod = type(getnamecallmethod) == "function" and getnamecallmethod() or ""
+            local caller = (type(checkcaller) == "function" and checkcaller()) or false
+            
+            if not caller then
+                if (NamecallMethod == "Kick" or NamecallMethod == "kick") and _G.ShystxEngineActive then
+                    if self == LocalPlayer then return end
+                end
+                
+                local isCoreGui = (CoreGui and self == CoreGui)
+                local isWorkspace = (workspace and self == workspace)
+                
+                if isCoreGui or self == game or isWorkspace then
+                    if NamecallMethod == "FindFirstChild" and select(1, ...) == targetGuiName then
+                        return nil
+                    elseif NamecallMethod == "GetChildren" or NamecallMethod == "GetDescendants" then
+                        local results = oldNamecall(self, ...)
+                        local filtered = {}
+                        if type(results) == "table" then
+                            for _, child in ipairs(results) do
+                                if child.Name ~= targetGuiName then table.insert(filtered, child) end
+                            end
+                        end
+                        return filtered
+                    end
+                end
+                
+                local DETECTION_REMOTES = { "CHECKER_1", "CHECKER", "OneMoreTime", "checkingSPEED", "PERMAIDBAN", "BANREMOTE", "FORCEFIELD", "TeleportDetect" }
+                if NamecallMethod == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) and _G.ShystxEngineActive then return end
+
+                if self == UserInputService and _G.ShystxEngineActive then
+                    local args = {...}
+                    if (NamecallMethod == "IsKeyDown" or NamecallMethod == "IsGamepadButtonDown") and MASK_KEYS[args[1]] then
+                        return false
+                    elseif NamecallMethod == "GetKeysPressed" or NamecallMethod == "GetGamepadState" then
+                        local keys = oldNamecall(self, ...)
+                        local filtered = {}
+                        if type(keys) == "table" then
+                            for _, inputObj in ipairs(keys) do
+                                if not MASK_KEYS[inputObj.KeyCode] then table.insert(filtered, inputObj) end
+                            end
+                        end
+                        return filtered
+                    end
+                end
+            end
+            return oldNamecall(self, ...)
+        end))
+    end)
+
+    pcall(function()
+        local oldIndex
+        oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
+            local caller = (type(checkcaller) == "function" and checkcaller()) or false
+            if not caller and _G.ShystxEngineActive then
+                if key == "Gravity" and self == workspace then return 196.2 end
+                if typeof(self) == "Instance" and self:IsA("InputObject") and key == "KeyCode" then
+                    local realKey = oldIndex(self, key)
+                    if MASK_KEYS[realKey] then return Enum.KeyCode.Unknown end
+                end
+            end
+            return oldIndex(self, key)
+        end))
+    end)
+end
+
+-- Detach Camera Listeners
+pcall(function()
+    if type(getconnections) == "function" then
+        local camera = workspace.CurrentCamera
+        if camera then
+            for _, conn in pairs(getconnections(camera.Changed)) do
+                if conn and type(conn.Disable) == "function" then conn:Disable() end
+            end
+            for _, conn in pairs(getconnections(camera:GetPropertyChangedSignal("CFrame"))) do
+                if conn and type(conn.Disable) == "function" then conn:Disable() end
+            end
+        end
+    end
+end)
+
+-- Fast Flag Normalizer
+local function CleanFlagName(flag)
+    return flag:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
+end
+
+local function AutoRepairJSON(rawText)
+    if type(rawText) ~= "string" or rawText:match("^%s*$") then return {}, "{}" end
+    local text = rawText:gsub("//[^\r\n]*", ""):gsub("/%*.-%*/", "")
+    text = text:gsub(",%s*}", "}"):gsub(",%s*]", "]")
+
+    local ok, parsed = pcall(function() return HttpService:JSONDecode(text) end)
+    if ok and type(parsed) == "table" then return parsed, HttpService:JSONEncode(parsed) end
+
+    local result = {}
+    for key, val in text:gmatch('["\']?([%w_%.%-]+)["\']?%s*[:=]%s*(["\']?[%w_%.%-%s]+["\']?)') do
+        local cleanKey = key:gsub('["\']', ''):gsub('^%s*(.-)%s*$', '%1')
+        local cleanVal = val:gsub('^%s*(.-)%s*$', '%1')
+        if cleanVal:sub(1,1) == '"' or cleanVal:sub(1,1) == "'" then cleanVal = cleanVal:sub(2, -2) end
+        cleanVal = cleanVal:gsub('^%s*(.-)%s*$', '%1')
+
+        if cleanKey ~= "" then
+            local num = tonumber(cleanVal)
+            if num ~= nil then result[cleanKey] = num
+            elseif cleanVal:lower() == "true" then result[cleanKey] = true
+            elseif cleanVal:lower() == "false" then result[cleanKey] = false
+            else result[cleanKey] = cleanVal end
+        end
+    end
+    local finalJson = "{}"
+    pcall(function() finalJson = HttpService:JSONEncode(result) end)
+    return result, finalJson
+end
+
+local function BuildNormalizedCache(decodedFlags)
+    local map = {}
+    if type(decodedFlags) == "table" then
+        for k, v in pairs(decodedFlags) do
+            local clean = CleanFlagName(k)
+            map[k] = tostring(v)
+            map[clean] = tostring(v)
+        end
+    end
+    return map
+end
+
+-- Physics Engine State (Manual UI instance hooks)
+local currentHumanoid = nil
+local currentRootPart = nil
+local characterConnections = {}
+local engineConnections = {}
+local activeToggle = true
+
+local FF3_BOOST = 0.65
+local FF3_TICKS = 6
+local ff3Boosting = false
+local ff3TickCount = 0
+local isAirborneBoosting = false
+
+local baseCurve = {1.5, 1.3, 1.0, 0.7, 0.4}
+local enhancedCurve = {1.7, 1.5, 1.2, 0.9, 0.6}
+
+local function SetLinearVel(part, x, y, z)
+    pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
+    pcall(function() part.Velocity = Vector3.new(x, y, z) end)
+end
+
+local function GetLinearVel(part)
+    local v = nil
+    pcall(function() v = part.AssemblyLinearVelocity end)
+    if not v then pcall(function() v = part.Velocity end) end
+    return v or Vector3.zero
+end
+
+local function cleanupCharacter()
+    for _, connection in ipairs(characterConnections) do
+        if connection and type(connection.Disconnect) == "function" then connection:Disconnect() end
+    end
+    characterConnections = {}
+    currentHumanoid = nil
+    currentRootPart = nil
+    ff3Boosting = false
+    ff3TickCount = 0
+    isAirborneBoosting = false
+end
+
+local function TriggerJumpBoost()
+    if not _G.ShystxEngineActive or not activeToggle or not currentRootPart or isAirborneBoosting then return end
+
+    local flags = _G.ShystxActiveFlagsCache or {}
+    local fluidMatches = 0
+    if flags["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
+    if flags["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
+    if flags["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
+    if flags["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
+    local hasFluidFlags = (fluidMatches >= 1)
+
+    local adaptiveMatches = 0
+    if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
+    if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
+    if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
+    local hasAdaptiveFlags = (adaptiveMatches >= 1)
+
+    if not hasFluidFlags and not hasAdaptiveFlags then return end
+
+    isAirborneBoosting = true
+    if hasFluidFlags then
+        ff3Boosting = true
+        ff3TickCount = 0
+    end
+
+    task.spawn(function()
+        task.wait(0.02)
+        local curveToUse = hasAdaptiveFlags and enhancedCurve or baseCurve
+        for i = 1, #curveToUse do
+            if not currentRootPart or not currentRootPart.Parent then break end
+            local curVel = GetLinearVel(currentRootPart)
+            SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
+            RunService.Heartbeat:Wait()
+        end
+        task.wait(0.15)
+        isAirborneBoosting = false
+    end)
+end
+
+local function setupCharacter(char)
+    if not char then return end
+    cleanupCharacter()
+
+    local humanoid = char:WaitForChild("Humanoid", 5)
+    local root = char:WaitForChild("HumanoidRootPart", 5)
+    if not humanoid or not root then return end
+
+    currentHumanoid = humanoid
+    currentRootPart = root
+
+    pcall(function()
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = 50
+        humanoid.AutoRotate = true
+        humanoid.PlatformStand = false
+    end)
+
+    if humanoid:GetState() == Enum.HumanoidStateType.Physics then
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+    end
+
+    local bouncePhase = 0
+
+    table.insert(characterConnections, RunService.Heartbeat:Connect(function()
+        if not _G.ShystxEngineActive or not root or not root.Parent or not activeToggle then return end
+
+        local flags = _G.ShystxActiveFlagsCache or {}
+
+        local adaptiveMatches = 0
+        if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
+        if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
+        if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
+        local hasAdaptiveFlags = (adaptiveMatches >= 1)
+
+        -- Ground Micro-Bounce
+        if hasAdaptiveFlags and not isAirborneBoosting then
+            local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
+            local state = humanoid:GetState()
+            if isGrounded or state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics or state == Enum.HumanoidStateType.Landed then
+                bouncePhase = bouncePhase + 1
+                if bouncePhase >= 2 then bouncePhase = 0 end
+                local vel = GetLinearVel(root)
+                if bouncePhase == 0 then
+                    SetLinearVel(root, vel.X, -2.5, vel.Z)
+                else
+                    SetLinearVel(root, vel.X, 5.8, vel.Z)
+                end
+            end
+        end
+
+        -- FF3 Ticked Booster Loop
+        if ff3Boosting then
+            ff3TickCount = ff3TickCount + 1
+            local jitter = (math.random() * 0.2) - 0.1
+            local vel = GetLinearVel(root)
+            if vel.Y > 0 then
+                SetLinearVel(root, vel.X, vel.Y + FF3_BOOST + jitter, vel.Z)
+            end
+
+            if ff3TickCount >= FF3_TICKS then
+                ff3Boosting = false
+                ff3TickCount = 0
+            end
+        end
+    end))
+
+    table.insert(characterConnections, humanoid.StateChanged:Connect(function(_, newState)
+        if not _G.ShystxEngineActive then return end
+        if newState == Enum.HumanoidStateType.Landed then
+            isAirborneBoosting = false
+        elseif newState == Enum.HumanoidStateType.Jumping then
+            TriggerJumpBoost()
+        end
+    end))
+
+    table.insert(characterConnections, humanoid.Jumping:Connect(function(isJumping)
+        if _G.ShystxEngineActive and isJumping then TriggerJumpBoost() end
+    end))
+end
+
+table.insert(engineConnections, UserInputService.JumpRequest:Connect(function()
+    if _G.ShystxEngineActive then TriggerJumpBoost() end
+end))
+
 table.insert(engineConnections, UserInputService.InputBegan:Connect(function(input, _)
     local rawKey = input.KeyCode
     if rawKey == Enum.KeyCode.LeftControl 
@@ -700,217 +733,66 @@ end))
 if LocalPlayer.Character then setupCharacter(LocalPlayer.Character) end
 table.insert(engineConnections, LocalPlayer.CharacterAdded:Connect(setupCharacter))
 
--- Global Cleanup Handler for zero-stacking across multiple Injections/Rejoins
 local cleanupFunc = function()
     cleanupCharacter()
     for _, conn in ipairs(engineConnections) do
-        if conn then conn:Disconnect() end
+        if conn and type(conn.Disconnect) == "function" then conn:Disconnect() end
     end
     engineConnections = {}
 end
 
 _G.ShystxLazyEngineCleanup = cleanupFunc
-if getgenv then
-    getgenv().ShystxLazyEngineCleanup = cleanupFunc
-end
-]==]
-
-local function StartEngineWithAutoExec()
-    local selfContainedScript = ""
-    pcall(function()
-        local scriptSource = debug.getinfo(1, "S").source
-        local cleanSource = scriptSource:match("@?(.*)")
-        if cleanSource and isfile and isfile(cleanSource) then
-            selfContainedScript = readfile(cleanSource)
-        end
-    end)
-    if selfContainedScript == "" then
-        selfContainedScript = "local __SRC = " .. string.format("%q", engineBody) .. "\n" .. engineBody
-    end
-
-    if queue_on_teleport then
-        pcall(function()
-            queue_on_teleport(obfuscate(selfContainedScript))
-        end)
-    end
-
-    loadstring(selfContainedScript)()
-end
-
--- ====================================================================
--- UNIVERSAL AUTO-REPAIR JSON PARSER
--- ====================================================================
-local function AutoRepairJSON(rawText)
-    if type(rawText) ~= "string" or rawText:match("^%s*$") then
-        return {}, "{}"
-    end
-
-    local ok, parsed = pcall(function() return HttpService:JSONDecode(rawText) end)
-    if ok and type(parsed) == "table" then
-        return parsed, HttpService:JSONEncode(parsed)
-    end
-
-    local result = {}
-    local text = rawText
-    text = text:gsub("//[^\r\n]*", "")
-    text = text:gsub("/%*.-%*/", "")
-
-    for key, val in text:gmatch('["\']?([%w_]+)["\']?%s*[:=]%s*(["\']?[%w_.%-]+["\']?)') do
-        local cleanKey = key:gsub('["\']', ''):gsub('^%s*(.-)%s*$', '%1')
-        local cleanVal = val:gsub('^%s*(.-)%s*$', '%1')
-
-        if cleanVal:sub(1,1) == '"' or cleanVal:sub(1,1) == "'" then
-            cleanVal = cleanVal:sub(2, -2)
-        end
-
-        local num = tonumber(cleanVal)
-        if num ~= nil then
-            result[cleanKey] = num
-        elseif cleanVal:lower() == "true" then
-            result[cleanKey] = true
-        elseif cleanVal:lower() == "false" then
-            result[cleanKey] = false
-        else
-            result[cleanKey] = cleanVal
-        end
-    end
-
-    local finalJson = "{}"
-    pcall(function()
-        finalJson = HttpService:JSONEncode(result)
-    end)
-
-    return result, finalJson
-end
-
-local setfflagFunc = setfflag or set_fflag or (getgenv and getgenv().setfflag)
-
-local function CleanFlagName(flag)
-    local clean = string.gsub(flag, "DFInt", "")
-    clean = string.gsub(clean, "DFFlag", "")
-    clean = string.gsub(clean, "FFlag", "")
-    clean = string.gsub(clean, "FInt", "")
-    clean = string.gsub(clean, "DFString", "")
-    clean = string.gsub(clean, "FString", "")
-    return clean
-end
+if getgenv and type(getgenv) == "function" then getgenv().ShystxLazyEngineCleanup = cleanupFunc end
 
 local function VerifyFlagStatus(flagName)
     if type(flagName) ~= "string" then return false end
-    local getfflag_func = getfflag or getflag or (getgenv and getgenv().getfflag)
+    local getfflag_func = getfflag or getflag
+    if type(getfflag_func) ~= "function" and getgenv and type(getgenv) == "function" then
+        pcall(function() getfflag_func = getgenv().getfflag end)
+    end
+    if type(getfflag_func) ~= "function" then return false end
     local s, r = pcall(function()
         local clean = CleanFlagName(flagName)
-        if getfflag_func then
-            local val = getfflag_func(clean)
-            if val == nil then val = getfflag_func(flagName) end
-            return val ~= nil
-        end
-        return false
+        local val = getfflag_func(clean)
+        if val == nil then val = getfflag_func(flagName) end
+        return val ~= nil
     end)
-    if s then return r else return false end
+    return (s and r) or false
 end
 
-local function ExecuteInjectionLogic(rawText)
-    local decoded, validJson = AutoRepairJSON(rawText)
+local function TrySetFlag(flagName, val)
+    if type(setfflag) ~= "function" then return false end
+    local cleanName = CleanFlagName(flagName)
     
-    if type(decoded) == "table" then
-        local totalFlags = 0
-        for _ in pairs(decoded) do
-            totalFlags = totalFlags + 1
-        end
-        
-        if totalFlags < 3 then
-            return false, 0, totalFlags, "INVALID"
-        end
+    local ok1 = pcall(function() setfflag(flagName, val) end)
+    if ok1 then return true end
+    local ok2 = pcall(function() setfflag(flagName, tostring(val)) end)
+    if ok2 then return true end
+    local ok3 = pcall(function() setfflag(cleanName, val) end)
+    if ok3 then return true end
+    local ok4 = pcall(function() setfflag(cleanName, tostring(val)) end)
+    if ok4 then return true end
 
-        if writefile then
-            pcall(function() writefile(F_PATH, validJson) end)
-        end
-        
-        local successCount = 0
-        local errorCount = 0
-        
-        for flagName, val in pairs(decoded) do
-            local cleanName = CleanFlagName(flagName)
-            local applied = false
-            
-            if setfflagFunc then
-                local ok1 = pcall(function()
-                    setfflagFunc(flagName, tostring(val))
-                end)
-                if ok1 then
-                    applied = true
-                else
-                    local ok2 = pcall(function()
-                        setfflagFunc(cleanName, tostring(val))
-                    end)
-                    if ok2 then applied = true end
-                end
-            end
-            
-            if flagName:lower():find("targetfps") and setfpscap then
-                local fpsOk = pcall(function()
-                    setfpscap(tonumber(val) or 9999)
-                end)
-                if fpsOk then applied = true end
-            end
-            
-            if applied then
-                successCount = successCount + 1
-            else
-                errorCount = errorCount + 1
-            end
-        end
-        
-        StartEngineWithAutoExec()
-        return true, successCount, errorCount, nil
-    else
-        return false, 0, 0, "PARSE_ERROR"
-    end
+    return false
 end
 
--- ====================================================================
--- PROFESSIONAL DUAL-TONE RED & BLUE UI (With Tab Navigation)
--- ====================================================================
-local oldUi = nil
-pcall(function()
-    if parentGui then
-        oldUi = parentGui:FindFirstChild("shystxlazy_ffm")
-    end
-end)
-if not oldUi then
-    pcall(function()
-        local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
-        if playerGui then
-            oldUi = playerGui:FindFirstChild("shystxlazy_ffm")
-        end
-    end)
-end
-if oldUi then 
-    pcall(function() oldUi:Destroy() end) 
-end
-
+-- UI Setup (Manual launch configuration)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "shystxlazy_ffm"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Fail-Safe ScreenGui Parenting with PlayerGui Backup
 local parented = false
 if parentGui then
-    local s = pcall(function()
+    pcall(function()
         ScreenGui.Parent = parentGui
         parented = (ScreenGui.Parent == parentGui)
     end)
-    if not s then parented = false end
 end
-
 if not parented then
     pcall(function()
         local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or LocalPlayer:WaitForChild("PlayerGui", 5)
-        if playerGui then
-            ScreenGui.Parent = playerGui
-        end
+        if playerGui then ScreenGui.Parent = playerGui end
     end)
 end
 
@@ -953,15 +835,18 @@ Main.Parent = ScreenGui
 
 local MainCorner = Instance.new("UICorner", Main)
 MainCorner.CornerRadius = UDim.new(0, 12)
-
-local MainStroke = AddStroke(Main, {Thickness = 1.4, Color = C.Border})
+pcall(function()
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 1.4
+    stroke.Color = C.Border
+    stroke.Parent = Main
+end)
 
 local UiScale = Instance.new("UIScale")
 UiScale.Scale = 0.01
 UiScale.Parent = Main
 Tween(UiScale, {Scale = 0.76}, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
--- Dual Accent Side Borders
 local LeftSideLine = Instance.new("Frame")
 LeftSideLine.Size = UDim2.new(0, 4, 1, 0)
 LeftSideLine.Position = UDim2.new(0, 0, 0, 0)
@@ -978,7 +863,6 @@ RightSideLine.BorderSizePixel = 0
 RightSideLine.Parent = Main
 Instance.new("UICorner", RightSideLine).CornerRadius = UDim.new(0, 2)
 
--- Top Bar Header
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, -8, 0, 44)
 TopBar.Position = UDim2.new(0, 4, 0, 0)
@@ -1040,21 +924,15 @@ local function MakeHeaderBtn(text, textColor, order)
     Btn.LayoutOrder = order
     Btn.Parent = TopRight
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
-    AddStroke(Btn, {Thickness = 1, Color = C.Border})
 
-    Btn.MouseEnter:Connect(function()
-        Tween(Btn, {BackgroundColor3 = C.BtnHover}, 0.2)
-    end)
-    Btn.MouseLeave:Connect(function()
-        Tween(Btn, {BackgroundColor3 = C.BtnBg}, 0.2)
-    end)
+    Btn.MouseEnter:Connect(function() Tween(Btn, {BackgroundColor3 = C.BtnHover}, 0.2) end)
+    Btn.MouseLeave:Connect(function() Tween(Btn, {BackgroundColor3 = C.BtnBg}, 0.2) end)
     return Btn
 end
 
 local MinBtn = MakeHeaderBtn("—", C.Blue, 1)
 local ClsBtn = MakeHeaderBtn("✕", C.Red, 2)
 
--- Tab Switcher Bar
 local TabBar = Instance.new("Frame")
 TabBar.Size = UDim2.new(1, -40, 0, 28)
 TabBar.Position = UDim2.new(0, 20, 0, 50)
@@ -1084,9 +962,7 @@ TabSavedBtn.TextSize = 11
 TabSavedBtn.TextColor3 = C.TxtGray
 TabSavedBtn.Parent = TabBar
 Instance.new("UICorner", TabSavedBtn).CornerRadius = UDim.new(0, 6)
-local TabSavedStk = AddStroke(TabSavedBtn, {Thickness = 1, Color = C.Border})
 
--- View Containers
 local ActiveContainer = Instance.new("Frame")
 ActiveContainer.Size = UDim2.new(1, -40, 1, -165)
 ActiveContainer.Position = UDim2.new(0, 20, 0, 84)
@@ -1101,7 +977,6 @@ SavedContainer.BackgroundTransparency = 1
 SavedContainer.Visible = false
 SavedContainer.Parent = Main
 
--- Active Flags Scroll View
 local FlagScroll = Instance.new("ScrollingFrame")
 FlagScroll.Size = UDim2.new(1, 0, 1, 0)
 FlagScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -1113,14 +988,11 @@ FlagScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 FlagScroll.Parent = ActiveContainer
 Instance.new("UICorner", FlagScroll).CornerRadius = UDim.new(0, 8)
 
-local FlagScrollStroke = AddStroke(FlagScroll, {Thickness = 1.2, Color = C.Border})
-
 local FLayout = Instance.new("UIListLayout")
 FLayout.SortOrder = Enum.SortOrder.LayoutOrder
 FLayout.Padding = UDim.new(0, 4)
 FLayout.Parent = FlagScroll
 
--- Named Configs Scroll View
 local ConfigScroll = Instance.new("ScrollingFrame")
 ConfigScroll.Size = UDim2.new(1, 0, 1, 0)
 ConfigScroll.Position = UDim2.new(0, 0, 0, 0)
@@ -1131,8 +1003,6 @@ ConfigScroll.ScrollBarImageColor3 = C.Border
 ConfigScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 ConfigScroll.Parent = SavedContainer
 Instance.new("UICorner", ConfigScroll).CornerRadius = UDim.new(0, 8)
-
-local ConfigScrollStroke = AddStroke(ConfigScroll, {Thickness = 1.2, Color = C.Border})
 
 local CLayout = Instance.new("UIListLayout")
 CLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1169,15 +1039,10 @@ local function AddActiveRow(flagKey, flagVal)
 end
 
 local function RefreshLists()
-    for _, x in ipairs(FlagScroll:GetChildren()) do
-        if x:IsA("Frame") then x:Destroy() end
-    end
-    for _, x in ipairs(ConfigScroll:GetChildren()) do
-        if x:IsA("Frame") then x:Destroy() end
-    end
+    for _, x in ipairs(FlagScroll:GetChildren()) do if x:IsA("Frame") then x:Destroy() end end
+    for _, x in ipairs(ConfigScroll:GetChildren()) do if x:IsA("Frame") then x:Destroy() end end
 
-    local cnt = ""
-    pcall(function() cnt = readfile(F_PATH) end)
+    local cnt = SafeReadFile(F_PATH)
     if cnt and cnt ~= "" then
         local dec = AutoRepairJSON(cnt)
         if type(dec) == "table" then
@@ -1187,8 +1052,7 @@ local function RefreshLists()
         end
     end
 
-    local cfgCnt = ""
-    pcall(function() cfgCnt = readfile(CONFIGS_PATH) end)
+    local cfgCnt = SafeReadFile(CONFIGS_PATH)
     if cfgCnt and cfgCnt ~= "" then
         local ok, dec = pcall(function() return HttpService:JSONDecode(cfgCnt) end)
         if ok and type(dec) == "table" then
@@ -1240,9 +1104,7 @@ local function RefreshLists()
                     Instance.new("UICorner", DelBtn).CornerRadius = UDim.new(0, 4)
 
                     LoadBtn.MouseButton1Click:Connect(function()
-                        pcall(function()
-                            writefile(F_PATH, HttpService:JSONEncode(flagsObj))
-                        end)
+                        SafeWriteFile(F_PATH, HttpService:JSONEncode(flagsObj))
                         LoadBtn.Text = "Loaded"
                         task.delay(1.5, function() LoadBtn.Text = "Load" end)
                         RefreshLists()
@@ -1250,9 +1112,7 @@ local function RefreshLists()
 
                     DelBtn.MouseButton1Click:Connect(function()
                         dec[cfgName] = nil
-                        pcall(function()
-                            writefile(CONFIGS_PATH, HttpService:JSONEncode(dec))
-                        end)
+                        SafeWriteFile(CONFIGS_PATH, HttpService:JSONEncode(dec))
                         R:Destroy()
                     end)
                 end
@@ -1265,22 +1125,7 @@ local function RefreshLists()
 end
 
 RefreshLists()
-pcall(function()
-    local cnt = ""
-    if isfile and isfile(F_PATH) then
-        cnt = readfile(F_PATH)
-    end
-    if cnt and cnt ~= "" then
-        local dec = AutoRepairJSON(cnt)
-        if type(dec) == "table" then
-            local total = 0
-            for _ in pairs(dec) do total = total + 1 end
-            if total >= 3 then
-                StartEngineWithAutoExec()
-            end
-        end
-    end
-end)
+
 FLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     FlagScroll.CanvasSize = UDim2.new(0, 0, 0, FLayout.AbsoluteContentSize.Y + 10)
 end)
@@ -1288,7 +1133,6 @@ CLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     ConfigScroll.CanvasSize = UDim2.new(0, 0, 0, CLayout.AbsoluteContentSize.Y + 10)
 end)
 
--- Tab Switch Actions
 TabActiveBtn.MouseButton1Click:Connect(function()
     Tween(TabActiveBtn, {BackgroundColor3 = C.Blue, TextColor3 = C.TxtWhite}, 0.2)
     Tween(TabSavedBtn, {BackgroundColor3 = C.BtnBg, TextColor3 = C.TxtGray}, 0.2)
@@ -1305,7 +1149,6 @@ TabSavedBtn.MouseButton1Click:Connect(function()
     RefreshLists()
 end)
 
--- Bottom Actions Toolbar
 local BotBar = Instance.new("Frame")
 BotBar.Size = UDim2.new(1, -40, 0, 38)
 BotBar.Position = UDim2.new(0, 20, 1, -50)
@@ -1329,14 +1172,9 @@ local function MakeActionBtn(txt, w, colorAccent)
     B.TextColor3 = colorAccent and C.TxtWhite or C.TxtDark
     B.Parent = BotBar
     Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
-    AddStroke(B, {Thickness = 1, Color = colorAccent and colorAccent or C.Border})
 
-    B.MouseEnter:Connect(function()
-        Tween(B, {BackgroundColor3 = colorAccent and C.DarkBlue or C.BtnHover}, 0.2)
-    end)
-    B.MouseLeave:Connect(function()
-        Tween(B, {BackgroundColor3 = colorAccent or C.BtnBg}, 0.2)
-    end)
+    B.MouseEnter:Connect(function() Tween(B, {BackgroundColor3 = colorAccent and C.DarkBlue or C.BtnHover}, 0.2) end)
+    B.MouseLeave:Connect(function() Tween(B, {BackgroundColor3 = colorAccent or C.BtnBg}, 0.2) end)
     return B
 end
 
@@ -1347,7 +1185,6 @@ local EditBtn = MakeActionBtn("Edit Flags", 80, nil)
 local ClearBtn = MakeActionBtn("Clear", 55, nil)
 local WipeBtn = MakeActionBtn("Close UI", 70, C.DarkRed)
 
--- Modal Panels
 local function MakePanel(w, h)
     local P = Instance.new("Frame")
     P.Size = UDim2.new(0, w, 0, h)
@@ -1359,7 +1196,6 @@ local function MakePanel(w, h)
     P.ZIndex = 10
     P.Parent = Main
     Instance.new("UICorner", P).CornerRadius = UDim.new(0, 10)
-    AddStroke(P, {Thickness = 1.4, Color = C.Border})
     return P
 end
 
@@ -1371,12 +1207,9 @@ end
 
 local function ClosePanel(panel)
     local tw = Tween(panel, {Position = UDim2.new(0.5, 0, 0.53, 0)}, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-    tw.Completed:Connect(function()
-        panel.Visible = false
-    end)
+    tw.Completed:Connect(function() panel.Visible = false end)
 end
 
--- Save Named Config Modal Panel
 local SaveConfigPanel = MakePanel(380, 140)
 local SaveCfgTitle = Instance.new("TextLabel")
 SaveCfgTitle.Size = UDim2.new(1, -24, 0, 24)
@@ -1393,7 +1226,7 @@ local ConfigNameBox = Instance.new("TextBox")
 ConfigNameBox.Size = UDim2.new(1, -32, 0, 32)
 ConfigNameBox.Position = UDim2.new(0, 16, 0, 42)
 ConfigNameBox.BackgroundColor3 = C.CBoxBg
-ConfigNameBox.PlaceholderText = "Enter Config Name (e.g. MyPreset1)..."
+ConfigNameBox.PlaceholderText = "Enter Config Name..."
 ConfigNameBox.Text = ""
 ConfigNameBox.Font = Enum.Font.GothamMedium
 ConfigNameBox.TextSize = 11
@@ -1401,7 +1234,6 @@ ConfigNameBox.TextColor3 = C.TxtDark
 ConfigNameBox.PlaceholderColor3 = C.TxtGray
 ConfigNameBox.Parent = SaveConfigPanel
 Instance.new("UICorner", ConfigNameBox).CornerRadius = UDim.new(0, 6)
-local CfgBoxStk = AddStroke(ConfigNameBox, {Thickness = 1, Color = C.Border})
 
 local CfgCancelBtn = Instance.new("TextButton")
 CfgCancelBtn.Size = UDim2.new(0, 75, 0, 28)
@@ -1456,7 +1288,6 @@ ImpBox.TextYAlignment = Enum.TextYAlignment.Top
 ImpBox.ClearTextOnFocus = false
 ImpBox.Parent = ImportPanel
 Instance.new("UICorner", ImpBox).CornerRadius = UDim.new(0, 6)
-local ImpBoxStk = AddStroke(ImpBox, {Thickness = 1, Color = C.Border})
 
 local ImpCancel = Instance.new("TextButton")
 ImpCancel.Size = UDim2.new(0, 80, 0, 28)
@@ -1517,7 +1348,6 @@ SearchBox.TextColor3 = C.TxtDark
 SearchBox.PlaceholderColor3 = C.TxtGray
 SearchBox.Parent = EditPanel
 Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 6)
-local SrchStk = AddStroke(SearchBox, {Thickness = 1, Color = C.Border})
 
 local EditScroll = Instance.new("ScrollingFrame")
 EditScroll.Size = UDim2.new(1, -32, 1, -135)
@@ -1529,7 +1359,6 @@ EditScroll.ScrollBarImageColor3 = C.Border
 EditScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 EditScroll.Parent = EditPanel
 Instance.new("UICorner", EditScroll).CornerRadius = UDim.new(0, 6)
-local EditStk = AddStroke(EditScroll, {Thickness = 1, Color = C.Border})
 
 local EL = Instance.new("UIListLayout")
 EL.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1537,11 +1366,8 @@ EL.Padding = UDim.new(0, 4)
 EL.Parent = EditScroll
 
 local function LoadEditPanel(srch)
-    for _, x in ipairs(EditScroll:GetChildren()) do
-        if x:IsA("Frame") then x:Destroy() end
-    end
-    local cnt = ""
-    pcall(function() cnt = readfile(F_PATH) end)
+    for _, x in ipairs(EditScroll:GetChildren()) do if x:IsA("Frame") then x:Destroy() end end
+    local cnt = SafeReadFile(F_PATH)
     if cnt and cnt ~= "" then
         local dec = AutoRepairJSON(cnt)
         if type(dec) == "table" then
@@ -1575,7 +1401,6 @@ local function LoadEditPanel(srch)
                     ValBox.TextColor3 = C.TxtDark
                     ValBox.Parent = R
                     Instance.new("UICorner", ValBox).CornerRadius = UDim.new(0, 4)
-                    AddStroke(ValBox, {Thickness = 1, Color = C.Border})
 
                     local Sv = Instance.new("TextButton")
                     Sv.Size = UDim2.new(0, 44, 1, -8)
@@ -1606,23 +1431,21 @@ local function LoadEditPanel(srch)
                         if tonumber(nv) then nv = tonumber(nv)
                         elseif nv:lower() == "true" then nv = true
                         elseif nv:lower() == "false" then nv = false end
-                        local curCnt = ""
-                        pcall(function() curCnt = readfile(F_PATH) end)
+                        local curCnt = SafeReadFile(F_PATH)
                         local curDec = AutoRepairJSON(curCnt)
                         if type(curDec) == "table" then
                             curDec[k] = nv
-                            pcall(function() writefile(F_PATH, HttpService:JSONEncode(curDec)) end)
+                            SafeWriteFile(F_PATH, HttpService:JSONEncode(curDec))
                             RefreshLists()
                         end
                     end)
 
                     Del.MouseButton1Click:Connect(function()
-                        local curCnt = ""
-                        pcall(function() curCnt = readfile(F_PATH) end)
+                        local curCnt = SafeReadFile(F_PATH)
                         local curDec = AutoRepairJSON(curCnt)
                         if type(curDec) == "table" then
                             curDec[k] = nil
-                            pcall(function() writefile(F_PATH, HttpService:JSONEncode(curDec)) end)
+                            SafeWriteFile(F_PATH, HttpService:JSONEncode(curDec))
                             RefreshLists()
                             R:Destroy()
                         end
@@ -1634,10 +1457,7 @@ local function LoadEditPanel(srch)
     EditScroll.CanvasSize = UDim2.new(0, 0, 0, EL.AbsoluteContentSize.Y + 10)
 end
 
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    LoadEditPanel(SearchBox.Text)
-end)
-
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function() LoadEditPanel(SearchBox.Text) end)
 EL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     EditScroll.CanvasSize = UDim2.new(0, 0, 0, EL.AbsoluteContentSize.Y + 10)
 end)
@@ -1659,7 +1479,6 @@ NewName.TextColor3 = C.TxtDark
 NewName.PlaceholderColor3 = C.TxtGray
 NewName.Parent = AddRow
 Instance.new("UICorner", NewName).CornerRadius = UDim.new(0, 4)
-local NStk = AddStroke(NewName, {Thickness = 1, Color = C.Border})
 
 local NewVal = Instance.new("TextBox")
 NewVal.Size = UDim2.new(0, 95, 1, -4)
@@ -1672,7 +1491,6 @@ NewVal.TextColor3 = C.TxtDark
 NewVal.PlaceholderColor3 = C.TxtGray
 NewVal.Parent = AddRow
 Instance.new("UICorner", NewVal).CornerRadius = UDim.new(0, 4)
-local NVStk = AddStroke(NewVal, {Thickness = 1, Color = C.Border})
 
 local AddBtn = Instance.new("TextButton")
 AddBtn.Size = UDim2.new(0, 55, 1, -4)
@@ -1697,31 +1515,35 @@ EdClose.TextSize = 11
 EdClose.TextColor3 = C.TxtDark
 EdClose.Parent = AddRow
 Instance.new("UICorner", EdClose).CornerRadius = UDim.new(0, 4)
-local EdStk = AddStroke(EdClose, {Thickness = 1, Color = C.Border})
 
 AddBtn.MouseButton1Click:Connect(function()
-    local fn = NewName.Text
-    local fv = NewVal.Text
+    local fn = NewName.Text:gsub('^%s*(.-)%s*$', '%1')
+    local fv = NewVal.Text:gsub('^%s*(.-)%s*$', '%1')
     if fn ~= "" and fv ~= "" then
-        if tonumber(fv) then fv = tonumber(fv)
-        elseif fv:lower() == "true" then fv = true
-        elseif fv:lower() == "false" then fv = false end
-        local cnt = ""
-        pcall(function() cnt = readfile(F_PATH) end)
+        local parsedVal = fv
+        if tonumber(fv) then parsedVal = tonumber(fv)
+        elseif fv:lower() == "true" then parsedVal = true
+        elseif fv:lower() == "false" then parsedVal = false end
+        
+        local cnt = SafeReadFile(F_PATH)
         local dec = AutoRepairJSON(cnt)
         if type(dec) == "table" then
-            dec[fn] = fv
-            pcall(function() writefile(F_PATH, HttpService:JSONEncode(dec)) end)
+            dec[fn] = parsedVal
+            SafeWriteFile(F_PATH, HttpService:JSONEncode(dec))
             RefreshLists()
             LoadEditPanel(SearchBox.Text)
         end
         NewName.Text = ""
         NewVal.Text = ""
+        AddBtn.Text = "Added!"
+        task.delay(1, function() AddBtn.Text = "Add" end)
     end
 end)
 
 ClearBtn.MouseButton1Click:Connect(function()
-    pcall(function() writefile(F_PATH, "{}") end)
+    _G.ShystxEngineActive = false
+    _G.ShystxActiveFlagsCache = {}
+    SafeWriteFile(F_PATH, "{}")
     RefreshLists()
 end)
 
@@ -1732,28 +1554,20 @@ SaveConfigBtn.MouseButton1Click:Connect(function()
     OpenPanel(SaveConfigPanel)
 end)
 
-CfgCancelBtn.MouseButton1Click:Connect(function()
-    ClosePanel(SaveConfigPanel)
-end)
+CfgCancelBtn.MouseButton1Click:Connect(function() ClosePanel(SaveConfigPanel) end)
 
 CfgSaveBtn.MouseButton1Click:Connect(function()
     local name = ConfigNameBox.Text:gsub('^%s*(.-)%s*$', '%1')
     if name ~= "" then
-        local cnt = ""
-        pcall(function() cnt = readfile(F_PATH) end)
+        local cnt = SafeReadFile(F_PATH)
         local activeDec = AutoRepairJSON(cnt)
         
-        local cfgCnt = ""
-        pcall(function() cfgCnt = readfile(CONFIGS_PATH) end)
+        local cfgCnt = SafeReadFile(CONFIGS_PATH)
         local ok, savedConfigs = pcall(function() return HttpService:JSONDecode(cfgCnt) end)
-        if not ok or type(savedConfigs) ~= "table" then
-            savedConfigs = {}
-        end
+        if not ok or type(savedConfigs) ~= "table" then savedConfigs = {} end
 
         savedConfigs[name] = activeDec
-        pcall(function()
-            writefile(CONFIGS_PATH, HttpService:JSONEncode(savedConfigs))
-        end)
+        SafeWriteFile(CONFIGS_PATH, HttpService:JSONEncode(savedConfigs))
         
         CfgSaveBtn.Text = "Saved!"
         RefreshLists()
@@ -1778,66 +1592,87 @@ EditBtn.MouseButton1Click:Connect(function()
     LoadEditPanel(SearchBox.Text)
 end)
 
-ImpCancel.MouseButton1Click:Connect(function()
-    ClosePanel(ImportPanel)
-end)
-
-EdClose.MouseButton1Click:Connect(function()
-    ClosePanel(EditPanel)
-end)
+ImpCancel.MouseButton1Click:Connect(function() ClosePanel(ImportPanel) end)
+EdClose.MouseButton1Click:Connect(function() ClosePanel(EditPanel) end)
 
 ImpAppend.MouseButton1Click:Connect(function()
     if ImpBox.Text ~= "" then
         local newFlags = AutoRepairJSON(ImpBox.Text)
-        local currentFlags = AutoRepairJSON(readfile(F_PATH))
+        local curCnt = SafeReadFile(F_PATH)
+        local currentFlags = AutoRepairJSON(curCnt)
         if type(newFlags) == "table" and type(currentFlags) == "table" then
-            for k, v in pairs(newFlags) do
-                currentFlags[k] = v
-            end
-            pcall(function() writefile(F_PATH, HttpService:JSONEncode(currentFlags)) end)
+            for k, v in pairs(newFlags) do currentFlags[k] = v end
+            SafeWriteFile(F_PATH, HttpService:JSONEncode(currentFlags))
             RefreshLists()
         end
     end
-    ClosePanel(ImportPanel)
+    ImpAppend.Text = "Added!"
+    task.delay(1, function()
+        ImpAppend.Text = "Add to Existing"
+        ClosePanel(ImportPanel)
+    end)
 end)
 
 ImpReplace.MouseButton1Click:Connect(function()
     if ImpBox.Text ~= "" then
         local _, repairedJson = AutoRepairJSON(ImpBox.Text)
-        pcall(function() writefile(F_PATH, repairedJson) end)
+        SafeWriteFile(F_PATH, repairedJson)
         RefreshLists()
     end
-    ClosePanel(ImportPanel)
+    ImpReplace.Text = "Replaced!"
+    task.delay(1, function()
+        ImpReplace.Text = "Replace All"
+        ClosePanel(ImportPanel)
+    end)
 end)
 
+-- Apply Flags Button Execution
 InjectBtn.MouseButton1Click:Connect(function()
-    local cnt = ""
-    pcall(function() cnt = readfile(F_PATH) end)
-    if cnt and cnt ~= "" then
-        local success, appliedCount, errCount, errCode = ExecuteInjectionLogic(cnt)
-        if success then
-            InjectBtn.Text = "Applied (" .. tostring(appliedCount) .. ")"
-            RefreshLists()
-        else
-            InjectBtn.Text = "Error"
-        end
-    else
-        InjectBtn.Text = "Error"
+    local cnt = SafeReadFile(F_PATH)
+    local decoded, validJson = AutoRepairJSON(cnt)
+    local totalFlags = 0
+    if type(decoded) == "table" then
+        for _ in pairs(decoded) do totalFlags = totalFlags + 1 end
     end
-    task.delay(2, function()
-        InjectBtn.Text = "Apply Flags"
-    end)
+
+    SafeWriteFile(F_PATH, validJson)
+    _G.ShystxActiveFlagsCache = BuildNormalizedCache(decoded)
+    _G.ShystxEngineActive = true
+
+    if type(decoded) == "table" then
+        for flagName, val in pairs(decoded) do
+            TrySetFlag(flagName, val)
+            if flagName:lower():find("targetfps") and type(setfpscap) == "function" then
+                pcall(function() setfpscap(tonumber(val) or 9999) end)
+            end
+        end
+    end
+
+    -- Persistent Local Stack Quine Re-Queue
+    local rawQ = queue_on_teleport 
+              or (syn and type(syn) == "table" and syn.queue_on_teleport) 
+              or (fluxus and type(fluxus) == "table" and fluxus.queue_on_teleport) 
+              or queueonteleport 
+              or queue_for_teleport
+
+    if rawQ then
+        pcall(function()
+            rawQ(fullSource)
+        end)
+    end
+
+    InjectBtn.Text = "Applied (" .. tostring(totalFlags) .. ")"
+    RefreshLists()
+    task.delay(2, function() InjectBtn.Text = "Apply Flags" end)
 end)
 
-local function Kill()
+local function ExitUI()
     local tw = Tween(UiScale, {Scale = 0.01}, 0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-    tw.Completed:Connect(function()
-        pcall(function() ScreenGui:Destroy() end)
-    end)
+    tw.Completed:Connect(function() pcall(function() ScreenGui:Destroy() end) end)
 end
 
-WipeBtn.MouseButton1Click:Connect(Kill)
-ClsBtn.MouseButton1Click:Connect(Kill)
+WipeBtn.MouseButton1Click:Connect(ExitUI)
+ClsBtn.MouseButton1Click:Connect(ExitUI)
 
 local function Toggle()
     Main.Visible = not Main.Visible
@@ -1858,9 +1693,7 @@ TopBar.InputBegan:Connect(function(inp)
         dStart = inp.Position
         sPos = Main.Position
         inp.Changed:Connect(function()
-            if inp.UserInputState == Enum.UserInputState.End then
-                drag = false
-            end
+            if inp.UserInputState == Enum.UserInputState.End then drag = false end
         end)
     end
 end)
@@ -1874,6 +1707,9 @@ end)
 UserInputService.InputChanged:Connect(function(inp)
     if inp == dInput and drag then
         local delta = inp.Position - dStart
-        Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + (delta.X / UiScale.Scale), sPos.Y.Scale, sPos.Y.Offset + (delta.Y / UiScale.Scale)) 
+        Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + (delta.X / math.max(UiScale.Scale, 0.01)), sPos.Y.Scale, sPos.Y.Offset + (delta.Y / math.max(UiScale.Scale, 0.01))) 
     end
 end)
+
+-- Initialize headless instance hooks/connections (will not run loops/hooks until ShystxEngineActive is true)
+loadstring(fullSource)()
