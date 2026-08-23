@@ -14,24 +14,78 @@
 if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
+local fenv = getfenv(0) or getfenv()
+local getgenv_func = rawget(fenv, "getgenv")
+local getgenv = type(getgenv_func) == "function" and getgenv_func or nil
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
 end
 
--- Teleport Quine Re-Execution Handler (Saves script code into memory queue)
-local q = queue_on_teleport 
-       or (syn and syn.queue_on_teleport) 
-       or (fluxus and fluxus.queue_on_teleport) 
-       or queueonteleport 
-       or queue_for_teleport
+local function decStr(str)
+    return string.reverse(str)
+end
 
-if q then
+local function getExploitGlobal(name)
+    local val = nil
+    if getgenv then
+        pcall(function() val = rawget(getgenv(), name) end)
+    end
+    if val ~= nil then return val end
+    pcall(function() val = rawget(fenv, name) end)
+    return val
+end
+
+local function get(revName)
+    return getExploitGlobal(decStr(revName))
+end
+
+local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or get("tropelet_rof_eueuq")
+if not queue_on_teleport then
+    local synTable = get("nys")
+    if type(synTable) == "table" then
+        queue_on_teleport = rawget(synTable, decStr("tropelet_no_eueuq"))
+    end
+end
+if not queue_on_teleport then
+    local fluxTable = get("suxulf")
+    if type(fluxTable) == "table" then
+        queue_on_teleport = rawget(fluxTable, decStr("tropelet_no_eueuq"))
+    end
+end
+
+local gethui = get("iuhteg")
+local cloneref = get("ferenolc") or function(x) return x end
+local hookmetamethod = get("dodematemkooh")
+local newcclosure = get("erusolcwen")
+local syn_newcclosure = get("erusolcwen_nys")
+local checkcaller = get("rellackehc") or function() return false end
+local getconnections = get("snoitcennocteg")
+local getnamecallmethod = get("dohtemllacemanteg") or getnamecallmethod
+local setfpscap = get("pacspftes")
+local setfflag = get("galfftes") or get("galff_tes")
+local getfflag = get("galffteg") or get("galfteg")
+local isfile = get("eliftsi")
+local isfolder = get("redloftsi")
+local makefolder = get("redlofekam")
+local writefile = get("elifetirw")
+local readfile = get("elifdaer")
+
+local function obfuscate(code)
+    local hex = {}
+    for i = 1, #code do
+        hex[i] = string.format("%02x", string.byte(code, i))
+    end
+    return "local h='" .. table.concat(hex) .. "';local s={};for i=1,#h,2 do s[#s+1]=string.char(tonumber(h:sub(i,i+1),16)) end;loadstring(table.concat(s))()"
+end
+
+-- Teleport Quine Re-Execution Handler (Saves script code into memory queue)
+if queue_on_teleport then
     pcall(function()
         local scriptSource = debug.getinfo(1, "S").source
         local cleanSource = scriptSource:match("@?(.*)")
         if cleanSource and isfile and isfile(cleanSource) then
             local fileContent = readfile(cleanSource)
-            q(fileContent)
+            queue_on_teleport(obfuscate(fileContent))
         end
     end)
 end
@@ -231,9 +285,51 @@ local engineBody = [==[
 if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
+local fenv = getfenv(0) or getfenv()
+local getgenv_func = rawget(fenv, "getgenv")
+local getgenv = type(getgenv_func) == "function" and getgenv_func or nil
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
 end
+
+local function decStr(str)
+    return string.reverse(str)
+end
+
+local function getExploitGlobal(name)
+    local val = nil
+    if getgenv then
+        pcall(function() val = rawget(getgenv(), name) end)
+    end
+    if val ~= nil then return val end
+    pcall(function() val = rawget(fenv, name) end)
+    return val
+end
+
+local function get(revName)
+    return getExploitGlobal(decStr(revName))
+end
+
+local queue_on_teleport = get("tropelet_no_eueuq") or get("tropeletnoeueuq") or get("tropelet_rof_eueuq")
+if not queue_on_teleport then
+    local synTable = get("nys")
+    if type(synTable) == "table" then
+        queue_on_teleport = rawget(synTable, decStr("tropelet_no_eueuq"))
+    end
+end
+if not queue_on_teleport then
+    local fluxTable = get("suxulf")
+    if type(fluxTable) == "table" then
+        queue_on_teleport = rawget(fluxTable, decStr("tropelet_no_eueuq"))
+    end
+end
+
+local hookmetamethod = get("dodematemkooh")
+local checkcaller = get("rellackehc") or function() return false end
+local getconnections = get("snoitcennocteg")
+local getnamecallmethod = get("dohtemllacemanteg") or getnamecallmethod
+local isfile = get("eliftsi")
+local readfile = get("elifdaer")
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -298,16 +394,15 @@ if initialFlags["SimHumanoidTimestepModelUpdate"] then initialAdaptiveMatches = 
 
 -- If flags were removed from the file, do not re-arm persistence or engine
 if initialTotal >= 3 and (initialFluidMatches >= 2 or initialAdaptiveMatches >= 2) then
-    local q = queue_on_teleport 
-           or (syn and syn.queue_on_teleport) 
-           or (fluxus and fluxus.queue_on_teleport) 
-           or queueonteleport 
-           or queue_for_teleport
-
-    if q then
+    if queue_on_teleport then
         pcall(function()
             local fullCode = "local __SRC = " .. string.format("%q", __SRC) .. "\n" .. __SRC
-            q(fullCode)
+            local hex = {}
+            for i = 1, #fullCode do
+                hex[i] = string.format("%02x", string.byte(fullCode, i))
+            end
+            local obfCode = "local h='" .. table.concat(hex) .. "';local s={};for i=1,#h,2 do s[#s+1]=string.char(tonumber(h:sub(i,i+1),16)) end;loadstring(table.concat(s))()"
+            queue_on_teleport(obfCode)
         end)
     end
 end
@@ -622,15 +717,9 @@ local function StartEngineWithAutoExec()
         selfContainedScript = "local __SRC = " .. string.format("%q", engineBody) .. "\n" .. engineBody
     end
 
-    local q = queue_on_teleport 
-           or (syn and syn.queue_on_teleport) 
-           or (fluxus and fluxus.queue_on_teleport) 
-           or queueonteleport 
-           or queue_for_teleport
-
-    if q then
+    if queue_on_teleport then
         pcall(function()
-            q(selfContainedScript)
+            queue_on_teleport(obfuscate(selfContainedScript))
         end)
     end
 
