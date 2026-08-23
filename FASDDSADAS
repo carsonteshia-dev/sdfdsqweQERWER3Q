@@ -15,8 +15,8 @@ if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
 local fenv = getfenv(0) or getfenv()
-local getgenv_func = rawget(fenv, "getgenv")
-local getgenv = type(getgenv_func) == "function" and getgenv_func or nil
+local getgenv = fenv[string.reverse("vnegteg")]
+if type(getgenv) ~= "function" then getgenv = nil end
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
 end
@@ -286,8 +286,8 @@ if _G.ShystxLazyEngineCleanup then
     pcall(_G.ShystxLazyEngineCleanup)
 end
 local fenv = getfenv(0) or getfenv()
-local getgenv_func = rawget(fenv, "getgenv")
-local getgenv = type(getgenv_func) == "function" and getgenv_func or nil
+local getgenv = fenv[string.reverse("vnegteg")]
+if type(getgenv) ~= "function" then getgenv = nil end
 if getgenv and getgenv().ShystxLazyEngineCleanup then
     pcall(getgenv().ShystxLazyEngineCleanup)
 end
