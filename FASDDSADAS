@@ -355,11 +355,6 @@ end
 
 local gethui = getExploitGlobal(string.reverse("iuhteg"))
 local cloneref = getExploitGlobal(string.reverse("ferenolc")) or function(x) return x end
-local hookmetamethod = getExploitGlobal(string.reverse("dodematemkooh"))
-local newcclosure = getExploitGlobal(string.reverse("erusolcwen")) or function(f) return f end
-local checkcaller = getExploitGlobal(string.reverse("rellackehc")) or function() return false end
-local getconnections = getExploitGlobal(string.reverse("snoitcennocteg"))
-local getnamecallmethod = getExploitGlobal(string.reverse("dohtemllacemanteg"))
 local setfpscap = getExploitGlobal(string.reverse("pacspftes"))
 local setfflag = getExploitGlobal(string.reverse("galfftes")) or getExploitGlobal(string.reverse("galff_tes")) or getExploitGlobal(string.reverse("galftes")) or getExploitGlobal(string.reverse("galf_tes"))
 local getfflag = getExploitGlobal(string.reverse("galffteg")) or getExploitGlobal(string.reverse("galfteg"))
@@ -421,97 +416,6 @@ end
 if SafeReadFile(F_PATH) == "{}" then SafeWriteFile(F_PATH, "{}") end
 if SafeReadFile(CONFIGS_PATH) == "{}" then SafeWriteFile(CONFIGS_PATH, "{}") end
 
--- Anti-Cheat Bypass & Key Masking (Gated Strictly Behind _G.ShystxEngineActive)
-local targetGuiName = "shystxlazy_ffm"
-local MASK_KEYS = {
-    [Enum.KeyCode.DPadUp] = true,
-    [Enum.KeyCode.LeftControl] = true
-}
-
-if type(hookmetamethod) == "function" then
-    pcall(function()
-        local oldNamecall
-        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-            local NamecallMethod = type(getnamecallmethod) == "function" and getnamecallmethod() or ""
-            local caller = (type(checkcaller) == "function" and checkcaller()) or false
-            
-            if not caller then
-                if (NamecallMethod == "Kick" or NamecallMethod == "kick") and _G.ShystxEngineActive then
-                    if self == LocalPlayer then return end
-                end
-                
-                local isCoreGui = (CoreGui and self == CoreGui)
-                local isWorkspace = (workspace and self == workspace)
-                
-                if isCoreGui or self == game or isWorkspace then
-                    if NamecallMethod == "FindFirstChild" and select(1, ...) == targetGuiName then
-                        return nil
-                    elseif NamecallMethod == "GetChildren" or NamecallMethod == "GetDescendants" then
-                        local results = oldNamecall(self, ...)
-                        local filtered = {}
-                        if type(results) == "table" then
-                            for _, child in ipairs(results) do
-                                if child.Name ~= targetGuiName then table.insert(filtered, child) end
-                            end
-                        end
-                        return filtered
-                    end
-                end
-                
-                local DETECTION_REMOTES = { "CHECKER_1", "CHECKER", "OneMoreTime", "checkingSPEED", "PERMAIDBAN", "BANREMOTE", "FORCEFIELD", "TeleportDetect" }
-                if NamecallMethod == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) and _G.ShystxEngineActive then return end
-
-                if self == UserInputService and _G.ShystxEngineActive then
-                    local args = {...}
-                    if (NamecallMethod == "IsKeyDown" or NamecallMethod == "IsGamepadButtonDown") and MASK_KEYS[args[1]] then
-                        return false
-                    elseif NamecallMethod == "GetKeysPressed" or NamecallMethod == "GetGamepadState" then
-                        local keys = oldNamecall(self, ...)
-                        local filtered = {}
-                        if type(keys) == "table" then
-                            for _, inputObj in ipairs(keys) do
-                                if not MASK_KEYS[inputObj.KeyCode] then table.insert(filtered, inputObj) end
-                            end
-                        end
-                        return filtered
-                    end
-                end
-            end
-            return oldNamecall(self, ...)
-        end))
-    end)
-
-    pcall(function()
-        local oldIndex
-        oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
-            local caller = (type(checkcaller) == "function" and checkcaller()) or false
-            if not caller and _G.ShystxEngineActive then
-                if key == "Gravity" and self == workspace then return 196.2 end
-                if typeof(self) == "Instance" and self:IsA("InputObject") and key == "KeyCode" then
-                    local realKey = oldIndex(self, key)
-                    if MASK_KEYS[realKey] then return Enum.KeyCode.Unknown end
-                end
-            end
-            return oldIndex(self, key)
-        end))
-    end)
-end
-
--- Detach Camera Listeners
-pcall(function()
-    if type(getconnections) == "function" then
-        local camera = workspace.CurrentCamera
-        if camera then
-            for _, conn in pairs(getconnections(camera.Changed)) do
-                if conn and type(conn.Disable) == "function" then conn:Disable() end
-            end
-            for _, conn in pairs(getconnections(camera:GetPropertyChangedSignal("CFrame"))) do
-                if conn and type(conn.Disable) == "function" then conn:Disable() end
-            end
-        end
-    end
-end)
-
 -- Fast Flag Normalizer
 local function CleanFlagName(flag)
     return flag:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
@@ -557,193 +461,6 @@ local function BuildNormalizedCache(decodedFlags)
     return map
 end
 
--- Physics Engine State (Manual UI instance hooks)
-local currentHumanoid = nil
-local currentRootPart = nil
-local characterConnections = {}
-local engineConnections = {}
-local activeToggle = true
-
-local FF3_BOOST = 0.65
-local FF3_TICKS = 6
-local ff3Boosting = false
-local ff3TickCount = 0
-local isAirborneBoosting = false
-
-local baseCurve = {1.5, 1.3, 1.0, 0.7, 0.4}
-local enhancedCurve = {1.7, 1.5, 1.2, 0.9, 0.6}
-
-local function SetLinearVel(part, x, y, z)
-    pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
-    pcall(function() part.Velocity = Vector3.new(x, y, z) end)
-end
-
-local function GetLinearVel(part)
-    local v = nil
-    pcall(function() v = part.AssemblyLinearVelocity end)
-    if not v then pcall(function() v = part.Velocity end) end
-    return v or Vector3.zero
-end
-
-local function cleanupCharacter()
-    for _, connection in ipairs(characterConnections) do
-        if connection and type(connection.Disconnect) == "function" then connection:Disconnect() end
-    end
-    characterConnections = {}
-    currentHumanoid = nil
-    currentRootPart = nil
-    ff3Boosting = false
-    ff3TickCount = 0
-    isAirborneBoosting = false
-end
-
-local function TriggerJumpBoost()
-    if not _G.ShystxEngineActive or not activeToggle or not currentRootPart or isAirborneBoosting then return end
-
-    local flags = _G.ShystxActiveFlagsCache or {}
-    local fluidMatches = 0
-    if flags["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
-    if flags["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
-    if flags["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
-    if flags["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
-    local hasFluidFlags = (fluidMatches >= 1)
-
-    local adaptiveMatches = 0
-    if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-    if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-    if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-    local hasAdaptiveFlags = (adaptiveMatches >= 1)
-
-    if not hasFluidFlags and not hasAdaptiveFlags then return end
-
-    isAirborneBoosting = true
-    if hasFluidFlags then
-        ff3Boosting = true
-        ff3TickCount = 0
-    end
-
-    task.spawn(function()
-        task.wait(0.02)
-        local curveToUse = hasAdaptiveFlags and enhancedCurve or baseCurve
-        for i = 1, #curveToUse do
-            if not currentRootPart or not currentRootPart.Parent then break end
-            local curVel = GetLinearVel(currentRootPart)
-            SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
-            RunService.Heartbeat:Wait()
-        end
-        task.wait(0.15)
-        isAirborneBoosting = false
-    end)
-end
-
-local function setupCharacter(char)
-    if not char then return end
-    cleanupCharacter()
-
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    local root = char:WaitForChild("HumanoidRootPart", 5)
-    if not humanoid or not root then return end
-
-    currentHumanoid = humanoid
-    currentRootPart = root
-
-    pcall(function()
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = 50
-        humanoid.AutoRotate = true
-        humanoid.PlatformStand = false
-    end)
-
-    if humanoid:GetState() == Enum.HumanoidStateType.Physics then
-        humanoid:ChangeState(Enum.HumanoidStateType.Running)
-    end
-
-    local bouncePhase = 0
-
-    table.insert(characterConnections, RunService.Heartbeat:Connect(function()
-        if not _G.ShystxEngineActive or not root or not root.Parent or not activeToggle then return end
-
-        local flags = _G.ShystxActiveFlagsCache or {}
-
-        local adaptiveMatches = 0
-        if flags["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flags["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flags["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-        local hasAdaptiveFlags = (adaptiveMatches >= 1)
-
-        -- Ground Micro-Bounce
-        if hasAdaptiveFlags and not isAirborneBoosting then
-            local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
-            local state = humanoid:GetState()
-            if isGrounded or state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics or state == Enum.HumanoidStateType.Landed then
-                bouncePhase = bouncePhase + 1
-                if bouncePhase >= 2 then bouncePhase = 0 end
-                local vel = GetLinearVel(root)
-                if bouncePhase == 0 then
-                    SetLinearVel(root, vel.X, -2.5, vel.Z)
-                else
-                    SetLinearVel(root, vel.X, 5.8, vel.Z)
-                end
-            end
-        end
-
-        -- FF3 Ticked Booster Loop
-        if ff3Boosting then
-            ff3TickCount = ff3TickCount + 1
-            local jitter = (math.random() * 0.2) - 0.1
-            local vel = GetLinearVel(root)
-            if vel.Y > 0 then
-                SetLinearVel(root, vel.X, vel.Y + FF3_BOOST + jitter, vel.Z)
-            end
-
-            if ff3TickCount >= FF3_TICKS then
-                ff3Boosting = false
-                ff3TickCount = 0
-            end
-        end
-    end))
-
-    table.insert(characterConnections, humanoid.StateChanged:Connect(function(_, newState)
-        if not _G.ShystxEngineActive then return end
-        if newState == Enum.HumanoidStateType.Landed then
-            isAirborneBoosting = false
-        elseif newState == Enum.HumanoidStateType.Jumping then
-            TriggerJumpBoost()
-        end
-    end))
-
-    table.insert(characterConnections, humanoid.Jumping:Connect(function(isJumping)
-        if _G.ShystxEngineActive and isJumping then TriggerJumpBoost() end
-    end))
-end
-
-table.insert(engineConnections, UserInputService.JumpRequest:Connect(function()
-    if _G.ShystxEngineActive then TriggerJumpBoost() end
-end))
-
-table.insert(engineConnections, UserInputService.InputBegan:Connect(function(input, _)
-    local rawKey = input.KeyCode
-    if rawKey == Enum.KeyCode.LeftControl 
-        or rawKey == Enum.KeyCode.RightControl 
-        or rawKey == Enum.KeyCode.DPadUp then
-        activeToggle = not activeToggle
-    end
-end))
-
-if LocalPlayer.Character then setupCharacter(LocalPlayer.Character) end
-table.insert(engineConnections, LocalPlayer.CharacterAdded:Connect(setupCharacter))
-
-local cleanupFunc = function()
-    cleanupCharacter()
-    for _, conn in ipairs(engineConnections) do
-        if conn and type(conn.Disconnect) == "function" then conn:Disconnect() end
-    end
-    engineConnections = {}
-end
-
-_G.ShystxLazyEngineCleanup = cleanupFunc
-if getgenv and type(getgenv) == "function" then getgenv().ShystxLazyEngineCleanup = cleanupFunc end
-
 local function VerifyFlagStatus(flagName)
     if type(flagName) ~= "string" then return false end
     local getfflag_func = getfflag or getflag
@@ -776,7 +493,7 @@ local function TrySetFlag(flagName, val)
     return false
 end
 
--- UI Setup (Manual launch configuration)
+-- UI Instantiation (Manual Only)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "shystxlazy_ffm"
 ScreenGui.ResetOnSpawn = false
@@ -1311,7 +1028,7 @@ ImpAppend.Font = Enum.Font.GothamBold
 ImpAppend.TextSize = 11
 ImpAppend.TextColor3 = C.TxtWhite
 ImpAppend.Parent = ImportPanel
-Instance.new("UICorner", ImpAppend).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", ImpAppend).CornerRadius = UDim.new(0, 4)
 
 local ImpReplace = Instance.new("TextButton")
 ImpReplace.Size = UDim2.new(0, 85, 0, 28)
@@ -1323,7 +1040,7 @@ ImpReplace.Font = Enum.Font.GothamBold
 ImpReplace.TextSize = 11
 ImpReplace.TextColor3 = C.TxtWhite
 ImpReplace.Parent = ImportPanel
-Instance.new("UICorner", ImpReplace).CornerRadius = UDim.new(0, 6)
+Instance.new("UICorner", ImpReplace).CornerRadius = UDim.new(0, 4)
 
 local EditPanel = MakePanel(470, 360)
 local EdTitle = Instance.new("TextLabel")
@@ -1626,7 +1343,7 @@ ImpReplace.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Apply Flags Button Execution
+-- Apply Flags Button: ACTIVES ENGINE & LOADS THE SILENT REJOIN QUINE
 InjectBtn.MouseButton1Click:Connect(function()
     local cnt = SafeReadFile(F_PATH)
     local decoded, validJson = AutoRepairJSON(cnt)
@@ -1648,14 +1365,20 @@ InjectBtn.MouseButton1Click:Connect(function()
         end
     end
 
-    -- Persistent Local Stack Quine Re-Queue
+    -- Run the quine payload locally ONLY ONCE now that flags are applied
+    local compileFunc, compileErr = loadstring(fullSource)
+    if type(compileFunc) == "function" then
+        pcall(compileFunc)
+    end
+
+    -- Queue the quine self-replication for teleports
     local rawQ = queue_on_teleport 
               or (syn and type(syn) == "table" and syn.queue_on_teleport) 
               or (fluxus and type(fluxus) == "table" and fluxus.queue_on_teleport) 
               or queueonteleport 
               or queue_for_teleport
 
-    if rawQ then
+    if type(rawQ) == "function" then
         pcall(function()
             rawQ(fullSource)
         end)
@@ -1710,6 +1433,3 @@ UserInputService.InputChanged:Connect(function(inp)
         Main.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + (delta.X / math.max(UiScale.Scale, 0.01)), sPos.Y.Scale, sPos.Y.Offset + (delta.Y / math.max(UiScale.Scale, 0.01))) 
     end
 end)
-
--- Initialize headless instance hooks/connections (will not run loops/hooks until ShystxEngineActive is true)
-loadstring(fullSource)()
