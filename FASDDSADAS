@@ -25,6 +25,15 @@ end
 -- =======================================================
 _G.ShystxEngineActive = true
 
+if _G.ShystxConnections then
+    for _, conn in ipairs(_G.ShystxConnections) do
+        if conn and type(conn.Disconnect) == "function" then
+            pcall(function() conn:Disconnect() end)
+        end
+    end
+end
+_G.ShystxConnections = {}
+
 local fenv = (type(getfenv) == "function" and getfenv(0)) or {}
 local getgenv = fenv[string.reverse("vnegteg")] or _G[string.reverse("vnegteg")] or shared[string.reverse("vnegteg")]
 if type(getgenv) ~= "function" then getgenv = nil end
@@ -75,45 +84,80 @@ if type(isfile) == "function" and type(readfile) == "function" then
         local parsedOk, decoded = pcall(function() return HttpService:JSONDecode(cnt) end)
         if parsedOk and type(decoded) == "table" then
             for k, v in pairs(decoded) do
-                flagsCache[k] = tostring(v)
+                flagsCache[k] = v
                 local clean = k:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", ""):gsub("^DFString", ""):gsub("^FString", "")
-                flagsCache[clean] = tostring(v)
+                flagsCache[clean] = v
                 TrySetFlag(k, v)
             end
         end
     end
 end
 
+local function IsFlagTrue(flagsTable, name)
+    if type(flagsTable) ~= "table" then return false end
+    local val = flagsTable[name]
+    if val == nil then val = flagsTable["FFlag" .. name] end
+    if val == nil then val = flagsTable["DFInt" .. name] end
+    if val == nil then val = flagsTable["DFFlag" .. name] end
+    if val == nil then val = flagsTable["FInt" .. name] end
+    if val == nil then
+        for k, v in pairs(flagsTable) do
+            if k:lower() == name:lower() or k:lower() == ("fflag" .. name):lower() or k:lower() == ("dfint" .. name):lower() then
+                val = v
+                break
+            end
+        end
+    end
+    if val == nil then return false end
+    if val == false or val == "false" or val == 0 or val == "0" then return false end
+    return true
+end
+
 local oldNamecall, oldIndex
 local MASK_KEYS = {
     [Enum.KeyCode.DPadUp] = true,
-    [Enum.KeyCode.LeftControl] = true
+    [Enum.KeyCode.LeftControl] = true,
+    [Enum.KeyCode.RightControl] = true,
+    ["DPadUp"] = true,
+    ["LeftControl"] = true,
+    ["RightControl"] = true,
+    ["Enum.KeyCode.DPadUp"] = true,
+    ["Enum.KeyCode.LeftControl"] = true,
+    ["Enum.KeyCode.RightControl"] = true
 }
 
-if type(hookmetamethod) == "function" then
+-- Metamethod Masking Layer
+if type(hookmetamethod) == "function" and not _G.ShystxHooked then
+    _G.ShystxHooked = true
     pcall(function()
         oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
             local method = type(getnamecallmethod) == "function" and getnamecallmethod() or ""
             local caller = (type(checkcaller) == "function" and checkcaller()) or false
-            if not caller then
-                if method == "Kick" or method == "kick" then
-                    if self == LocalPlayer then return end
+            if not caller and _G.ShystxEngineActive then
+                if (method == "Kick" or method == "kick") and self == LocalPlayer then
+                    return
                 end
                 local DETECTION_REMOTES = {
                     "CHECKER_1", "CHECKER", "OneMoreTime", "checkingSPEED",
                     "PERMAIDBAN", "BANREMOTE", "FORCEFIELD", "TeleportDetect"
                 }
-                if method == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) then return end
+                if method == "FireServer" and table.find(DETECTION_REMOTES, tostring(self)) then
+                    return
+                end
                 if self == UserInputService then
                     local args = {...}
-                    if (method == "IsKeyDown" or method == "IsGamepadButtonDown") and MASK_KEYS[args[1]] then
-                        return false
-                    elseif method == "GetKeysPressed" or method == "GetGamepadState" then
+                    if (method == "IsKeyDown" or method == "isKeyDown" or method == "IsGamepadButtonDown" or method == "isGamepadButtonDown") then
+                        if MASK_KEYS[args[1]] or MASK_KEYS[args[2]] then
+                            return false
+                        end
+                    elseif method == "GetKeysPressed" or method == "getKeysPressed" or method == "GetGamepadState" or method == "getGamepadState" then
                         local keys = oldNamecall(self, ...)
                         local filtered = {}
                         if type(keys) == "table" then
                             for _, inputObj in ipairs(keys) do
-                                if not MASK_KEYS[inputObj.KeyCode] then
+                                local k = nil
+                                pcall(function() k = inputObj.KeyCode end)
+                                if k and not (MASK_KEYS[k] or MASK_KEYS[tostring(k)] or (typeof(k) == "EnumItem" and MASK_KEYS[k.Name])) then
                                     table.insert(filtered, inputObj)
                                 end
                             end
@@ -129,11 +173,18 @@ if type(hookmetamethod) == "function" then
     pcall(function()
         oldIndex = hookmetamethod(game, "__index", newcclosure(function(self, key)
             local caller = (type(checkcaller) == "function" and checkcaller()) or false
-            if not caller then
-                if key == "Gravity" and self == workspace then return 196.2 end
-                if typeof(self) == "Instance" and self:IsA("InputObject") and key == "KeyCode" then
-                    local realKey = oldIndex(self, key)
-                    if MASK_KEYS[realKey] then return Enum.KeyCode.Unknown end
+            if not caller and _G.ShystxEngineActive then
+                if key == "Gravity" and (self == workspace or self == game:GetService("Workspace")) then
+                    return 196.2
+                end
+                if (key == "KeyCode" or key == "keyCode") then
+                    local ok, isInput = pcall(function() return self:IsA("InputObject") end)
+                    if ok and isInput then
+                        local realKey = oldIndex(self, "KeyCode")
+                        if MASK_KEYS[realKey] or MASK_KEYS[tostring(realKey)] or (typeof(realKey) == "EnumItem" and MASK_KEYS[realKey.Name]) then
+                            return Enum.KeyCode.Unknown
+                        end
+                    end
                 end
             end
             return oldIndex(self, key)
@@ -156,6 +207,7 @@ pcall(function()
 end)
 
 local UserInputService = game:GetService("UserInputService")
+local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
 
 local currentHumanoid = nil
@@ -163,14 +215,22 @@ local currentRootPart = nil
 local characterConnections = {}
 local activeToggle = true
 
-local FF3_BOOST = 0.65
+local lastToggleTime = 0
+local function DoToggle()
+    local now = os.clock()
+    if now - lastToggleTime < 0.15 then return end
+    lastToggleTime = now
+    activeToggle = not activeToggle
+end
+
+local FF3_BOOST = 0.25
 local FF3_TICKS = 6
 local ff3Boosting = false
 local ff3TickCount = 0
 local isAirborneBoosting = false
 
-local baseCurve = {1.5, 1.3, 1.0, 0.7, 0.4}
-local enhancedCurve = {1.7, 1.5, 1.2, 0.9, 0.6}
+local baseCurve = {0.7, 0.5, 0.3, 0.15, 0.05}
+local enhancedCurve = {1.0, 0.8, 0.5, 0.3, 0.1}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -197,20 +257,26 @@ local function cleanupCharacter()
 end
 
 local function TriggerJumpBoost()
-    if not activeToggle or not currentRootPart or isAirborneBoosting then return end
+    if not activeToggle or isAirborneBoosting then return end
 
-    local fluidMatches = 0
-    if flagsCache["SimDefaultFluidForceEnabled"] then fluidMatches = fluidMatches + 1 end
-    if flagsCache["SimDefaultFluidHeightBooster"] then fluidMatches = fluidMatches + 1 end
-    if flagsCache["CharacterJumpBoost"] then fluidMatches = fluidMatches + 1 end
-    if flagsCache["SimDefaultFluidForceJumpHeightMultiplier"] then fluidMatches = fluidMatches + 1 end
-    local hasFluidFlags = (fluidMatches >= 1)
+    if not currentRootPart or not currentRootPart.Parent then
+        local char = LocalPlayer.Character
+        if char then
+            currentRootPart = char:FindFirstChild("HumanoidRootPart")
+            currentHumanoid = char:FindFirstChild("Humanoid")
+        end
+    end
+    if not currentRootPart then return end
 
-    local adaptiveMatches = 0
-    if flagsCache["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-    if flagsCache["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-    if flagsCache["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-    local hasAdaptiveFlags = (adaptiveMatches >= 1)
+    local flags = _G.ShystxActiveFlagsCache or flagsCache or {}
+    local hasFluidFlags = IsFlagTrue(flags, "SimDefaultFluidForceEnabled")
+                       or IsFlagTrue(flags, "SimDefaultFluidHeightBooster")
+                       or IsFlagTrue(flags, "CharacterJumpBoost")
+                       or IsFlagTrue(flags, "SimDefaultFluidForceJumpHeightMultiplier")
+
+    local hasAdaptiveFlags = IsFlagTrue(flags, "SimAdaptiveTimesteppingDefault2")
+                          or IsFlagTrue(flags, "SimAdaptiveHumanoidPDControllerSubstepMultiplier")
+                          or IsFlagTrue(flags, "SimHumanoidTimestepModelUpdate")
 
     if not hasFluidFlags and not hasAdaptiveFlags then return end
 
@@ -246,8 +312,6 @@ local function setupCharacter(char)
     currentRootPart = root
 
     pcall(function()
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = 50
         humanoid.AutoRotate = true
         humanoid.PlatformStand = false
     end)
@@ -257,29 +321,37 @@ local function setupCharacter(char)
     end
 
     local bouncePhase = 0
+    local wasGrounded = true
 
-    table.insert(characterConnections, RunService.Heartbeat:Connect(function()
+    local hbConn = RunService.Heartbeat:Connect(function()
         if not root or not root.Parent or not activeToggle then return end
 
-        local adaptiveMatches = 0
-        if flagsCache["SimAdaptiveTimesteppingDefault2"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flagsCache["SimAdaptiveHumanoidPDControllerSubstepMultiplier"] then adaptiveMatches = adaptiveMatches + 1 end
-        if flagsCache["SimHumanoidTimestepModelUpdate"] then adaptiveMatches = adaptiveMatches + 1 end
-        local hasAdaptiveFlags = (adaptiveMatches >= 1)
+        local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
+        if isGrounded then
+            isAirborneBoosting = false
+        end
 
-        -- Ground Micro-Bounce
-        if hasAdaptiveFlags and not isAirborneBoosting then
-            local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
-            local state = humanoid:GetState()
-            if isGrounded or state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics or state == Enum.HumanoidStateType.Landed then
-                bouncePhase = bouncePhase + 1
-                if bouncePhase >= 2 then bouncePhase = 0 end
-                local vel = GetLinearVel(root)
-                if bouncePhase == 0 then
-                    SetLinearVel(root, vel.X, -2.5, vel.Z)
-                else
-                    SetLinearVel(root, vel.X, 5.8, vel.Z)
-                end
+        local flags = _G.ShystxActiveFlagsCache or flagsCache or {}
+        local hasAdaptiveFlags = IsFlagTrue(flags, "SimAdaptiveTimesteppingDefault2")
+                              or IsFlagTrue(flags, "SimAdaptiveHumanoidPDControllerSubstepMultiplier")
+                              or IsFlagTrue(flags, "SimHumanoidTimestepModelUpdate")
+
+        local state = humanoid:GetState()
+        local vel = GetLinearVel(root)
+        local isTryingToJump = humanoid.Jump or state == Enum.HumanoidStateType.Jumping
+
+        -- Auto-detect jump on Heartbeat
+        if (isTryingToJump or (wasGrounded and not isGrounded and vel.Y > 1.2)) and not isAirborneBoosting then
+            TriggerJumpBoost()
+        end
+        wasGrounded = isGrounded
+
+        -- Crisp Ground Micro-Bounce (Pure Upward Spring, Never Interferes with Jumping)
+        if hasAdaptiveFlags and not isAirborneBoosting and isGrounded and not isTryingToJump then
+            bouncePhase = bouncePhase + 1
+            if bouncePhase >= 2 then bouncePhase = 0 end
+            if bouncePhase == 1 then
+                SetLinearVel(root, vel.X, math.max(vel.Y, 4.8), vel.Z)
             end
         end
 
@@ -287,9 +359,9 @@ local function setupCharacter(char)
         if ff3Boosting then
             ff3TickCount = ff3TickCount + 1
             local jitter = (math.random() * 0.2) - 0.1
-            local vel = GetLinearVel(root)
-            if vel.Y > 0 then
-                SetLinearVel(root, vel.X, vel.Y + FF3_BOOST + jitter, vel.Z)
+            local curVel = GetLinearVel(root)
+            if curVel.Y > 0 then
+                SetLinearVel(root, curVel.X, curVel.Y + FF3_BOOST + jitter, curVel.Z)
             end
 
             if ff3TickCount >= FF3_TICKS then
@@ -297,33 +369,53 @@ local function setupCharacter(char)
                 ff3TickCount = 0
             end
         end
-    end))
+    end)
+    table.insert(characterConnections, hbConn)
+    table.insert(_G.ShystxConnections, hbConn)
 
-    table.insert(characterConnections, humanoid.StateChanged:Connect(function(_, newState)
+    local scConn = humanoid.StateChanged:Connect(function(_, newState)
         if newState == Enum.HumanoidStateType.Landed then
             isAirborneBoosting = false
         elseif newState == Enum.HumanoidStateType.Jumping then
             TriggerJumpBoost()
         end
-    end))
+    end)
+    table.insert(characterConnections, scConn)
+    table.insert(_G.ShystxConnections, scConn)
 
-    table.insert(characterConnections, humanoid.Jumping:Connect(function(isJumping)
+    local jConn = humanoid.Jumping:Connect(function(isJumping)
         if isJumping then TriggerJumpBoost() end
-    end))
+    end)
+    table.insert(characterConnections, jConn)
+    table.insert(_G.ShystxConnections, jConn)
 end
 
-UserInputService.JumpRequest:Connect(TriggerJumpBoost)
-UserInputService.InputBegan:Connect(function(input, _)
+local jrConn = UserInputService.JumpRequest:Connect(TriggerJumpBoost)
+table.insert(_G.ShystxConnections, jrConn)
+
+-- Sink toggle keys from game input listeners while processing toggle
+pcall(function()
+    ContextActionService:BindActionAtPriority("ShystxMaskToggle", function(_, inputState)
+        if inputState == Enum.UserInputState.Begin then
+            DoToggle()
+        end
+        return Enum.ContextActionResult.Sink
+    end, false, 20000, Enum.KeyCode.LeftControl, Enum.KeyCode.RightControl, Enum.KeyCode.DPadUp)
+end)
+
+local ibConn = UserInputService.InputBegan:Connect(function(input, _)
     local rawKey = input.KeyCode
     if rawKey == Enum.KeyCode.LeftControl 
         or rawKey == Enum.KeyCode.RightControl 
         or rawKey == Enum.KeyCode.DPadUp then
-        activeToggle = not activeToggle
+        DoToggle()
     end
 end)
+table.insert(_G.ShystxConnections, ibConn)
 
 if LocalPlayer.Character then setupCharacter(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(setupCharacter)
+local caConn = LocalPlayer.CharacterAdded:Connect(setupCharacter)
+table.insert(_G.ShystxConnections, caConn)
 ]==]
 
 -- Initial Bootstrapping (Generates self-sustaining local string)
@@ -381,6 +473,7 @@ local function SafeReadFile(path)
 end
 
 local UserInputService = game:GetService("UserInputService")
+local ContextActionService = game:GetService("ContextActionService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local HttpService = type(cloneref) == "function" and cloneref(game:GetService("HttpService")) or game:GetService("HttpService")
@@ -454,8 +547,8 @@ local function BuildNormalizedCache(decodedFlags)
     if type(decodedFlags) == "table" then
         for k, v in pairs(decodedFlags) do
             local clean = CleanFlagName(k)
-            map[k] = tostring(v)
-            map[clean] = tostring(v)
+            map[k] = v
+            map[clean] = v
         end
     end
     return map
@@ -1028,7 +1121,7 @@ ImpAppend.Font = Enum.Font.GothamBold
 ImpAppend.TextSize = 11
 ImpAppend.TextColor3 = C.TxtWhite
 ImpAppend.Parent = ImportPanel
-Instance.new("UICorner", ImpAppend).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", ImpAppend).CornerRadius = UDim.new(0, 6)
 
 local ImpReplace = Instance.new("TextButton")
 ImpReplace.Size = UDim2.new(0, 85, 0, 28)
