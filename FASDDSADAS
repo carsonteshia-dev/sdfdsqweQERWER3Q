@@ -230,7 +230,7 @@ local ff3TickCount = 0
 local isAirborneBoosting = false
 
 local baseCurve = {0.7, 0.5, 0.3, 0.15, 0.05}
-local enhancedCurve = {1.0, 0.8, 0.5, 0.3, 0.1}
+local enhancedCurve = {1.4, 1.1, 0.8, 0.5, 0.2}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
