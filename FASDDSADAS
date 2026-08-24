@@ -230,10 +230,28 @@ local ff3TickCount = 0
 
 local lastJumpBoostTime = 0
 
--- Normal jump curve: clean, crisp, natural boost
+-- Double Tap Tracking for LeftShift & ButtonL3 (0.45s window)
+local shiftTapHistory = {}
+local l3TapHistory = {}
+
 local normalJumpCurve = {4.5, 3.2, 2.0, 1.0}
--- Shift-unshift / Shiftlock curve: amplified high launch power
-local shiftUnshiftCurve = {12.0, 9.0, 6.0, 3.5, 1.5}
+local doubleShiftCurve = {15.0, 11.0, 7.5, 4.0, 2.0}
+
+local function RegisterDoubleTap(tapTable)
+    local now = os.clock()
+    table.insert(tapTable, now)
+    while #tapTable > 0 and (now - tapTable[1] > 0.45) do
+        table.remove(tapTable, 1)
+    end
+    return #tapTable >= 2
+end
+
+local function HasActiveDoubleTap()
+    local now = os.clock()
+    local hasShift = (#shiftTapHistory >= 2) and ((now - shiftTapHistory[#shiftTapHistory]) < 0.6)
+    local hasL3 = (#l3TapHistory >= 2) and ((now - l3TapHistory[#l3TapHistory]) < 0.6)
+    return hasShift or hasL3
+end
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -290,18 +308,18 @@ local function TriggerJumpBoost()
         ff3TickCount = 0
     end
 
-    local isShift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) 
-                 or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
-                 or (UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter)
-                 or (currentHumanoid and currentHumanoid.AutoRotate == false)
-
-    local curveToUse = (isShift and hasAdaptiveFlags) and shiftUnshiftCurve or normalJumpCurve
+    local isDoubleTapTriggered = HasActiveDoubleTap() and hasAdaptiveFlags
+    local curveToUse = isDoubleTapTriggered and doubleShiftCurve or normalJumpCurve
 
     task.spawn(function()
         for i = 1, #curveToUse do
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
-            SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
+            local moveDir = currentHumanoid and currentHumanoid.MoveDirection or Vector3.zero
+            local hx = isDoubleTapTriggered and (moveDir.X * 3.5) or 0
+            local hz = isDoubleTapTriggered and (moveDir.Z * 3.5) or 0
+
+            SetLinearVel(currentRootPart, curVel.X + hx, curVel.Y + curveToUse[i], curVel.Z + hz)
             RunService.Heartbeat:Wait()
         end
     end)
@@ -391,6 +409,20 @@ end
 
 local jrConn = UserInputService.JumpRequest:Connect(TriggerJumpBoost)
 table.insert(_G.ShystxConnections, jrConn)
+
+-- Double Tap Input Listeners for Left Shift & Gamepad L3 (ButtonL3)
+local tapConn = UserInputService.InputBegan:Connect(function(inp, _)
+    if inp.KeyCode == Enum.KeyCode.LeftShift then
+        if RegisterDoubleTap(shiftTapHistory) then
+            TriggerJumpBoost()
+        end
+    elseif inp.KeyCode == Enum.KeyCode.ButtonL3 then
+        if RegisterDoubleTap(l3TapHistory) then
+            TriggerJumpBoost()
+        end
+    end
+end)
+table.insert(_G.ShystxConnections, tapConn)
 
 -- Sink toggle keys from game input listeners while processing toggle
 pcall(function()
