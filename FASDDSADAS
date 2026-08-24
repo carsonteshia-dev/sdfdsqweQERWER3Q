@@ -227,10 +227,14 @@ local FF3_BOOST = 0.25
 local FF3_TICKS = 6
 local ff3Boosting = false
 local ff3TickCount = 0
-local isAirborneBoosting = false
 
-local baseCurve = {0.7, 0.5, 0.3, 0.15, 0.05}
-local enhancedCurve = {1.4, 1.1, 0.8, 0.5, 0.2}
+local isAirborneBoosting = false
+local lastJumpBoostTime = 0
+
+-- Normal jump curve: very subtle, clean, controlled
+local normalJumpCurve = {0.4, 0.3, 0.15, 0.05}
+-- Shift-unshift / Shiftlock curve: punchy, higher adaptive boost
+local shiftUnshiftCurve = {1.5, 1.2, 0.8, 0.4, 0.2}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -257,7 +261,8 @@ local function cleanupCharacter()
 end
 
 local function TriggerJumpBoost()
-    if not activeToggle or isAirborneBoosting then return end
+    local now = os.clock()
+    if not activeToggle or isAirborneBoosting or (now - lastJumpBoostTime < 0.35) then return end
 
     if not currentRootPart or not currentRootPart.Parent then
         local char = LocalPlayer.Character
@@ -281,21 +286,28 @@ local function TriggerJumpBoost()
     if not hasFluidFlags and not hasAdaptiveFlags then return end
 
     isAirborneBoosting = true
+    lastJumpBoostTime = now
+
     if hasFluidFlags then
         ff3Boosting = true
         ff3TickCount = 0
     end
 
+    local isShift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) 
+                 or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
+                 or (UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter)
+
+    local curveToUse = (isShift and hasAdaptiveFlags) and shiftUnshiftCurve or normalJumpCurve
+
     task.spawn(function()
         task.wait(0.02)
-        local curveToUse = hasAdaptiveFlags and enhancedCurve or baseCurve
         for i = 1, #curveToUse do
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
             SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
             RunService.Heartbeat:Wait()
         end
-        task.wait(0.15)
+        task.wait(0.2)
         isAirborneBoosting = false
     end)
 end
@@ -327,7 +339,7 @@ local function setupCharacter(char)
         if not root or not root.Parent or not activeToggle then return end
 
         local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
-        if isGrounded then
+        if isGrounded and (os.clock() - lastJumpBoostTime > 0.25) then
             isAirborneBoosting = false
         end
 
@@ -346,7 +358,7 @@ local function setupCharacter(char)
         end
         wasGrounded = isGrounded
 
-        -- Crisp Ground Micro-Bounce (Pure Upward Spring, Never Interferes with Jumping)
+        -- Crisp Ground Micro-Bounce (Pure Upward Spring, Never Touches Jump)
         if hasAdaptiveFlags and not isAirborneBoosting and isGrounded and not isTryingToJump then
             bouncePhase = bouncePhase + 1
             if bouncePhase >= 2 then bouncePhase = 0 end
