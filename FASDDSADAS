@@ -223,17 +223,14 @@ local function DoToggle()
     activeToggle = not activeToggle
 end
 
-local FF3_BOOST = 0.35
+local FF3_BOOST = 0.25
 local FF3_TICKS = 6
 local ff3Boosting = false
 local ff3TickCount = 0
+local isAirborneBoosting = false
 
-local lastJumpBoostTime = 0
-
--- Normal jump curve: clean, noticeable, controlled
-local normalJumpCurve = {2.5, 1.5, 0.8}
--- Shift-unshift / Shiftlock curve: amplified power
-local shiftUnshiftCurve = {6.5, 4.0, 2.2, 1.0}
+local baseCurve = {0.4, 0.25, 0.1}
+local enhancedShiftCurve = {1.8, 1.4, 1.0, 0.6, 0.2}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -256,20 +253,20 @@ local function cleanupCharacter()
     currentRootPart = nil
     ff3Boosting = false
     ff3TickCount = 0
+    isAirborneBoosting = false
 end
 
 local function TriggerJumpBoost()
-    local now = os.clock()
-    if not activeToggle or (now - lastJumpBoostTime < 0.18) then return end
+    if not activeToggle or isAirborneBoosting then return end
 
-    if not currentRootPart or not currentRootPart.Parent or not currentHumanoid then
+    if not currentRootPart or not currentRootPart.Parent then
         local char = LocalPlayer.Character
         if char then
             currentRootPart = char:FindFirstChild("HumanoidRootPart")
             currentHumanoid = char:FindFirstChild("Humanoid")
         end
     end
-    if not currentRootPart or not currentHumanoid then return end
+    if not currentRootPart then return end
 
     local flags = _G.ShystxActiveFlagsCache or flagsCache or {}
     local hasFluidFlags = IsFlagTrue(flags, "SimDefaultFluidForceEnabled")
@@ -283,8 +280,7 @@ local function TriggerJumpBoost()
 
     if not hasFluidFlags and not hasAdaptiveFlags then return end
 
-    lastJumpBoostTime = now
-
+    isAirborneBoosting = true
     if hasFluidFlags then
         ff3Boosting = true
         ff3TickCount = 0
@@ -293,17 +289,19 @@ local function TriggerJumpBoost()
     local isShift = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) 
                  or UserInputService:IsKeyDown(Enum.KeyCode.RightShift)
                  or (UserInputService.MouseBehavior == Enum.MouseBehavior.LockCenter)
-                 or (currentHumanoid and currentHumanoid.AutoRotate == false)
 
-    local curveToUse = (isShift and hasAdaptiveFlags) and shiftUnshiftCurve or normalJumpCurve
+    local curveToUse = (isShift and hasAdaptiveFlags) and enhancedShiftCurve or baseCurve
 
     task.spawn(function()
+        task.wait(0.02)
         for i = 1, #curveToUse do
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
             SetLinearVel(currentRootPart, curVel.X, curVel.Y + curveToUse[i], curVel.Z)
             RunService.Heartbeat:Wait()
         end
+        task.wait(0.15)
+        isAirborneBoosting = false
     end)
 end
 
@@ -319,6 +317,7 @@ local function setupCharacter(char)
     currentRootPart = root
 
     pcall(function()
+        humanoid.AutoRotate = true
         humanoid.PlatformStand = false
     end)
 
@@ -333,6 +332,9 @@ local function setupCharacter(char)
         if not root or not root.Parent or not activeToggle then return end
 
         local isGrounded = (humanoid.FloorMaterial ~= Enum.Material.Air)
+        if isGrounded then
+            isAirborneBoosting = false
+        end
 
         local flags = _G.ShystxActiveFlagsCache or flagsCache or {}
         local hasAdaptiveFlags = IsFlagTrue(flags, "SimAdaptiveTimesteppingDefault2")
@@ -344,13 +346,13 @@ local function setupCharacter(char)
         local isTryingToJump = humanoid.Jump or state == Enum.HumanoidStateType.Jumping
 
         -- Jump Detection on Heartbeat
-        if (isTryingToJump or (wasGrounded and not isGrounded and vel.Y > 0.5)) then
+        if (isTryingToJump or (wasGrounded and not isGrounded and vel.Y > 1.2)) and not isAirborneBoosting then
             TriggerJumpBoost()
         end
         wasGrounded = isGrounded
 
         -- Crisp Ground Micro-Bounce
-        if hasAdaptiveFlags and isGrounded and not isTryingToJump then
+        if hasAdaptiveFlags and not isAirborneBoosting and isGrounded and not isTryingToJump then
             bouncePhase = bouncePhase + 1
             if bouncePhase >= 2 then bouncePhase = 0 end
             if bouncePhase == 1 then
@@ -377,7 +379,9 @@ local function setupCharacter(char)
     table.insert(_G.ShystxConnections, hbConn)
 
     local scConn = humanoid.StateChanged:Connect(function(_, newState)
-        if newState == Enum.HumanoidStateType.Jumping then
+        if newState == Enum.HumanoidStateType.Landed then
+            isAirborneBoosting = false
+        elseif newState == Enum.HumanoidStateType.Jumping then
             TriggerJumpBoost()
         end
     end)
