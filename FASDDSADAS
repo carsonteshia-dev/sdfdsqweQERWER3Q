@@ -231,10 +231,10 @@ local ff3TickCount = 0
 local isAirborneBoosting = false
 local lastJumpBoostTime = 0
 
--- Normal jump curve: very subtle, clean, controlled
+-- Normal jump curve: subtle, clean, controlled
 local normalJumpCurve = {0.4, 0.3, 0.15, 0.05}
--- Shift-unshift / Shiftlock curve: punchy, higher adaptive boost
-local shiftUnshiftCurve = {1.5, 1.2, 0.8, 0.4, 0.2}
+-- Shift-unshift / Shiftlock curve: amplified power
+local shiftUnshiftCurve = {2.2, 1.7, 1.2, 0.7, 0.3}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
