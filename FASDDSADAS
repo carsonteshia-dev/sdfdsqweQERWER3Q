@@ -229,28 +229,26 @@ local ff3Boosting = false
 local ff3TickCount = 0
 
 local lastJumpBoostTime = 0
+local lastShiftBoostTime = 0
 
--- Double Tap Tracking for LeftShift & ButtonL3 (0.45s window)
-local shiftTapHistory = {}
-local l3TapHistory = {}
+-- Double-tap tracker arrays
+local shiftTapTimes = {}
+local l3TapTimes = {}
 
 local normalJumpCurve = {4.5, 3.2, 2.0, 1.0}
-local doubleShiftCurve = {15.0, 11.0, 7.5, 4.0, 2.0}
+local shiftCurveY = {14.0, 10.0, 6.5, 3.5, 1.5}
+local shiftCurveH = {38.0, 32.0, 24.0, 14.0, 5.0}
 
-local function RegisterDoubleTap(tapTable)
+local function CheckDoubleTap(tapTable, window)
     local now = os.clock()
     table.insert(tapTable, now)
-    while #tapTable > 0 and (now - tapTable[1] > 0.45) do
-        table.remove(tapTable, 1)
+    if #tapTable > 2 then table.remove(tapTable, 1) end
+    if #tapTable == 2 and (tapTable[2] - tapTable[1] <= (window or 0.55)) then
+        tapTable[1] = 0
+        tapTable[2] = 0
+        return true
     end
-    return #tapTable >= 2
-end
-
-local function HasActiveDoubleTap()
-    local now = os.clock()
-    local hasShift = (#shiftTapHistory >= 2) and ((now - shiftTapHistory[#shiftTapHistory]) < 0.6)
-    local hasL3 = (#l3TapHistory >= 2) and ((now - l3TapHistory[#l3TapHistory]) < 0.6)
-    return hasShift or hasL3
+    return false
 end
 
 local function SetLinearVel(part, x, y, z)
@@ -276,6 +274,39 @@ local function cleanupCharacter()
     ff3TickCount = 0
 end
 
+-- Dedicated 2x Shift / 2x L3 / Shift-Unshift Instant Launch
+local function TriggerShiftBoost()
+    local now = os.clock()
+    if not activeToggle or (now - lastShiftBoostTime < 0.15) then return end
+    lastShiftBoostTime = now
+
+    if not currentRootPart or not currentRootPart.Parent or not currentHumanoid then
+        local char = LocalPlayer.Character
+        if char then
+            currentRootPart = char:FindFirstChild("HumanoidRootPart")
+            currentHumanoid = char:FindFirstChild("Humanoid")
+        end
+    end
+    if not currentRootPart or not currentHumanoid then return end
+
+    local moveDir = currentHumanoid.MoveDirection
+    if moveDir.Magnitude < 0.1 then
+        moveDir = currentRootPart.CFrame.LookVector
+    end
+
+    task.spawn(function()
+        for i = 1, #shiftCurveY do
+            if not currentRootPart or not currentRootPart.Parent then break end
+            local curVel = GetLinearVel(currentRootPart)
+            local hx = moveDir.X * shiftCurveH[i]
+            local hz = moveDir.Z * shiftCurveH[i]
+            SetLinearVel(currentRootPart, hx, math.max(curVel.Y, 0) + shiftCurveY[i], hz)
+            RunService.Heartbeat:Wait()
+        end
+    end)
+end
+
+-- Normal Jump Boost (Fired only on Jump)
 local function TriggerJumpBoost()
     local now = os.clock()
     if not activeToggle or (now - lastJumpBoostTime < 0.22) then return end
@@ -308,18 +339,11 @@ local function TriggerJumpBoost()
         ff3TickCount = 0
     end
 
-    local isDoubleTapTriggered = HasActiveDoubleTap() and hasAdaptiveFlags
-    local curveToUse = isDoubleTapTriggered and doubleShiftCurve or normalJumpCurve
-
     task.spawn(function()
-        for i = 1, #curveToUse do
+        for i = 1, #normalJumpCurve do
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
-            local moveDir = currentHumanoid and currentHumanoid.MoveDirection or Vector3.zero
-            local hx = isDoubleTapTriggered and (moveDir.X * 3.5) or 0
-            local hz = isDoubleTapTriggered and (moveDir.Z * 3.5) or 0
-
-            SetLinearVel(currentRootPart, curVel.X + hx, curVel.Y + curveToUse[i], curVel.Z + hz)
+            SetLinearVel(currentRootPart, curVel.X, curVel.Y + normalJumpCurve[i], curVel.Z)
             RunService.Heartbeat:Wait()
         end
     end)
@@ -360,13 +384,13 @@ local function setupCharacter(char)
         local vel = GetLinearVel(root)
         local isTryingToJump = humanoid.Jump or state == Enum.HumanoidStateType.Jumping
 
-        -- Jump Detection
+        -- Normal Jump Boost
         if isTryingToJump and (os.clock() - lastJumpBoostTime > 0.2) then
             TriggerJumpBoost()
         end
 
         -- Crisp Ground Micro-Bounce
-        if hasAdaptiveFlags and isGrounded and not isTryingToJump and (os.clock() - lastJumpBoostTime > 0.25) then
+        if hasAdaptiveFlags and isGrounded and not isTryingToJump and (os.clock() - lastJumpBoostTime > 0.25) and (os.clock() - lastShiftBoostTime > 0.3) then
             bouncePhase = bouncePhase + 1
             if bouncePhase >= 2 then bouncePhase = 0 end
             if bouncePhase == 1 then
@@ -410,19 +434,32 @@ end
 local jrConn = UserInputService.JumpRequest:Connect(TriggerJumpBoost)
 table.insert(_G.ShystxConnections, jrConn)
 
--- Double Tap Input Listeners for Left Shift & Gamepad L3 (ButtonL3)
-local tapConn = UserInputService.InputBegan:Connect(function(inp, _)
-    if inp.KeyCode == Enum.KeyCode.LeftShift then
-        if RegisterDoubleTap(shiftTapHistory) then
-            TriggerJumpBoost()
+-- Direct 2x Left Shift and 2x L3 Listeners (Began & Ended for shift-unshift)
+local shiftPressConn = UserInputService.InputBegan:Connect(function(inp, _)
+    if inp.KeyCode == Enum.KeyCode.LeftShift or inp.KeyCode == Enum.KeyCode.RightShift then
+        if CheckDoubleTap(shiftTapTimes, 0.55) then
+            TriggerShiftBoost()
         end
     elseif inp.KeyCode == Enum.KeyCode.ButtonL3 then
-        if RegisterDoubleTap(l3TapHistory) then
-            TriggerJumpBoost()
+        if CheckDoubleTap(l3TapTimes, 0.55) then
+            TriggerShiftBoost()
         end
     end
 end)
-table.insert(_G.ShystxConnections, tapConn)
+table.insert(_G.ShystxConnections, shiftPressConn)
+
+local shiftReleaseConn = UserInputService.InputEnded:Connect(function(inp, _)
+    if inp.KeyCode == Enum.KeyCode.LeftShift or inp.KeyCode == Enum.KeyCode.RightShift then
+        if CheckDoubleTap(shiftTapTimes, 0.55) then
+            TriggerShiftBoost()
+        end
+    elseif inp.KeyCode == Enum.KeyCode.ButtonL3 then
+        if CheckDoubleTap(l3TapTimes, 0.55) then
+            TriggerShiftBoost()
+        end
+    end
+end)
+table.insert(_G.ShystxConnections, shiftReleaseConn)
 
 -- Sink toggle keys from game input listeners while processing toggle
 pcall(function()
