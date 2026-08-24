@@ -223,33 +223,36 @@ local function DoToggle()
     activeToggle = not activeToggle
 end
 
-local FF3_BOOST = 0.35
+local FF3_BOOST = 0.25
 local FF3_TICKS = 6
 local ff3Boosting = false
 local ff3TickCount = 0
 
 local lastJumpBoostTime = 0
-local lastShiftBoostTime = 0
 
--- Double-tap tracker arrays
-local shiftTapTimes = {}
-local l3TapTimes = {}
+-- 2x LeftShift and 2x L3 Tracking
+local shiftTaps = {}
+local l3Taps = {}
+local isShiftBoostArmed = false
+local armedExpirationTime = 0
 
-local normalJumpCurve = {4.5, 3.2, 2.0, 1.0}
-local shiftCurveY = {12.0, 8.5, 5.0, 2.5}
-local shiftCurveH = {38.0, 32.0, 24.0, 14.0, 5.0}
-
-local function CheckDoubleTap(tapTable, window)
+local function RecordTap(tapArray)
     local now = os.clock()
-    table.insert(tapTable, now)
-    if #tapTable > 2 then table.remove(tapTable, 1) end
-    if #tapTable == 2 and (tapTable[2] - tapTable[1] <= (window or 0.55)) then
-        tapTable[1] = 0
-        tapTable[2] = 0
-        return true
+    table.insert(tapArray, now)
+    while #tapArray > 0 and (now - tapArray[1] > 0.55) do
+        table.remove(tapArray, 1)
     end
-    return false
+    if #tapArray >= 2 then
+        table.clear(tapArray)
+        isShiftBoostArmed = true
+        armedExpirationTime = now + 1.2
+    end
 end
+
+-- Normal jump curve: clean, subtle, natural boost
+local normalJumpCurve = {1.5, 1.0, 0.5}
+-- 2x Shift / 2x L3 jump curve: tuned, crisp, controlled
+local shiftJumpCurve = {2.8, 2.0, 1.2, 0.4}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -274,47 +277,7 @@ local function cleanupCharacter()
     ff3TickCount = 0
 end
 
--- Ground-Locked 2x Shift / 2x L3 / Shift-Unshift Launch
-local function TriggerShiftBoost()
-    local now = os.clock()
-    if not activeToggle or (now - lastShiftBoostTime < 0.15) then return end
-    lastShiftBoostTime = now
-
-    if not currentRootPart or not currentRootPart.Parent or not currentHumanoid then
-        local char = LocalPlayer.Character
-        if char then
-            currentRootPart = char:FindFirstChild("HumanoidRootPart")
-            currentHumanoid = char:FindFirstChild("Humanoid")
-        end
-    end
-    if not currentRootPart or not currentHumanoid then return end
-
-    local isGrounded = (currentHumanoid.FloorMaterial ~= Enum.Material.Air)
-    local moveDir = currentHumanoid.MoveDirection
-    if moveDir.Magnitude < 0.1 then
-        moveDir = currentRootPart.CFrame.LookVector
-    end
-
-    task.spawn(function()
-        for i = 1, #shiftCurveH do
-            if not currentRootPart or not currentRootPart.Parent then break end
-            local curVel = GetLinearVel(currentRootPart)
-            local hx = moveDir.X * shiftCurveH[i]
-            local hz = moveDir.Z * shiftCurveH[i]
-
-            -- Zero vertical lift when grounded; only boost Y if player is in the air/jumping
-            local yVel = curVel.Y
-            if not isGrounded and shiftCurveY[i] then
-                yVel = curVel.Y + shiftCurveY[i]
-            end
-
-            SetLinearVel(currentRootPart, hx, yVel, hz)
-            RunService.Heartbeat:Wait()
-        end
-    end)
-end
-
--- Normal Jump Boost (Fired purely on Jump)
+-- STRICT JUMP GATED: Only executes when actively jumping
 local function TriggerJumpBoost()
     local now = os.clock()
     if not activeToggle or (now - lastJumpBoostTime < 0.22) then return end
@@ -347,11 +310,21 @@ local function TriggerJumpBoost()
         ff3TickCount = 0
     end
 
+    local isArmed = isShiftBoostArmed and (now <= armedExpirationTime)
+    isShiftBoostArmed = false -- Consume armed boost
+
+    local curveToUse = isArmed and shiftJumpCurve or normalJumpCurve
+
     task.spawn(function()
-        for i = 1, #normalJumpCurve do
+        task.wait(0.01)
+        for i = 1, #curveToUse do
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
-            SetLinearVel(currentRootPart, curVel.X, curVel.Y + normalJumpCurve[i], curVel.Z)
+            local moveDir = currentHumanoid and currentHumanoid.MoveDirection or Vector3.zero
+            local hx = isArmed and (moveDir.X * 2.0) or 0
+            local hz = isArmed and (moveDir.Z * 2.0) or 0
+
+            SetLinearVel(currentRootPart, curVel.X + hx, curVel.Y + curveToUse[i], curVel.Z + hz)
             RunService.Heartbeat:Wait()
         end
     end)
@@ -392,13 +365,13 @@ local function setupCharacter(char)
         local vel = GetLinearVel(root)
         local isTryingToJump = humanoid.Jump or state == Enum.HumanoidStateType.Jumping
 
-        -- Normal Jump Boost
+        -- Jump Trigger
         if isTryingToJump and (os.clock() - lastJumpBoostTime > 0.2) then
             TriggerJumpBoost()
         end
 
         -- Crisp Ground Micro-Bounce
-        if hasAdaptiveFlags and isGrounded and not isTryingToJump and (os.clock() - lastJumpBoostTime > 0.25) and (os.clock() - lastShiftBoostTime > 0.3) then
+        if hasAdaptiveFlags and isGrounded and not isTryingToJump and (os.clock() - lastJumpBoostTime > 0.25) then
             bouncePhase = bouncePhase + 1
             if bouncePhase >= 2 then bouncePhase = 0 end
             if bouncePhase == 1 then
@@ -442,32 +415,24 @@ end
 local jrConn = UserInputService.JumpRequest:Connect(TriggerJumpBoost)
 table.insert(_G.ShystxConnections, jrConn)
 
--- Direct 2x Left Shift and 2x L3 Listeners
-local shiftPressConn = UserInputService.InputBegan:Connect(function(inp, _)
+-- 2x LeftShift & 2x L3 Input Listener (ONLY arms boost, NEVER applies velocity directly!)
+local armConn1 = UserInputService.InputBegan:Connect(function(inp, _)
     if inp.KeyCode == Enum.KeyCode.LeftShift or inp.KeyCode == Enum.KeyCode.RightShift then
-        if CheckDoubleTap(shiftTapTimes, 0.55) then
-            TriggerShiftBoost()
-        end
+        RecordTap(shiftTaps)
     elseif inp.KeyCode == Enum.KeyCode.ButtonL3 then
-        if CheckDoubleTap(l3TapTimes, 0.55) then
-            TriggerShiftBoost()
-        end
+        RecordTap(l3Taps)
     end
 end)
-table.insert(_G.ShystxConnections, shiftPressConn)
+table.insert(_G.ShystxConnections, armConn1)
 
-local shiftReleaseConn = UserInputService.InputEnded:Connect(function(inp, _)
+local armConn2 = UserInputService.InputEnded:Connect(function(inp, _)
     if inp.KeyCode == Enum.KeyCode.LeftShift or inp.KeyCode == Enum.KeyCode.RightShift then
-        if CheckDoubleTap(shiftTapTimes, 0.55) then
-            TriggerShiftBoost()
-        end
+        RecordTap(shiftTaps)
     elseif inp.KeyCode == Enum.KeyCode.ButtonL3 then
-        if CheckDoubleTap(l3TapTimes, 0.55) then
-            TriggerShiftBoost()
-        end
+        RecordTap(l3Taps)
     end
 end)
-table.insert(_G.ShystxConnections, shiftReleaseConn)
+table.insert(_G.ShystxConnections, armConn2)
 
 -- Sink toggle keys from game input listeners while processing toggle
 pcall(function()
