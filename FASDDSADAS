@@ -201,7 +201,8 @@ local function RecordTap(tapArray)
 end
 
 local normalJumpCurve = {1.5, 1.0, 0.5}
-local shiftJumpCurve = {3.6, 2.6, 1.6, 0.8}
+-- Dialed up shift-unshift launch curve
+local shiftJumpCurve = {4.8, 3.6, 2.2, 1.0}
 
 local function SetLinearVel(part, x, y, z)
     pcall(function() part.AssemblyLinearVelocity = Vector3.new(x, y, z) end)
@@ -256,8 +257,8 @@ local function TriggerJumpBoost()
             if not currentRootPart or not currentRootPart.Parent then break end
             local curVel = GetLinearVel(currentRootPart)
             local moveDir = currentHumanoid and currentHumanoid.MoveDirection or Vector3.zero
-            local hx = isArmed and (moveDir.X * 2.0) or 0
-            local hz = isArmed and (moveDir.Z * 2.0) or 0
+            local hx = isArmed and (moveDir.X * 3.0) or 0
+            local hz = isArmed and (moveDir.Z * 3.0) or 0
             SetLinearVel(currentRootPart, curVel.X + hx, curVel.Y + curveToUse[i], curVel.Z + hz)
             RunService.Heartbeat:Wait()
         end
